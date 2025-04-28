@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+*.env
+
+# Datos Grandes (¡IMPORTANTE!)
+# Si tu archivo JSON es muy grande (GitHub tiene límites),
+# o no quieres que sea público, añádelo aquí:
+data/anime-offline-database-minified.json
+base_anime_data.csv
+anime_data.01.csv
+# Otros
+.DS_Store
+*.log
+*.tmp

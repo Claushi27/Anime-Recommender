@@ -1,0 +1,328 @@
+/* styles-additional.css - Estilos adicionales para AniEmotion */
+
+/* Estilos para emociones */
+.emotion-tag {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-right: 8px;
+    color: white;
+  }
+  
+  .emotion-tag.epic {
+    background-color: #ff4757;
+  }
+  
+  .emotion-tag.tension {
+    background-color: #5352ed;
+  }
+  
+  .emotion-tag.sad {
+    background-color: #1e90ff;
+  }
+  
+  .emotion-tag.nostalgia {
+    background-color: #70a1ff;
+  }
+  
+  .emotion-tag.happy {
+    background-color: #ff6b81;
+  }
+  
+  .emotion-tag.wonder {
+    background-color: #ffa502;
+  }
+  
+  /* Estilos para botones Ver Detalles por emoción */
+  .anime-see {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .anime-see:hover {
+    transform: translateY(-2px);
+  }
+  
+  .anime-see.anime-blue {
+    color: #1e90ff;
+  }
+  
+  .anime-see.anime-pink {
+    color: #ff6b81;
+  }
+  
+  .anime-see.anime-yellow {
+    color: #ffa502;
+  }
+  
+  .anime-see.anime-purple {
+    color: #5352ed;
+  }
+  
+  /* Estilos para selección de emociones */
+  .emotion {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 5px;
+    border-radius: 8px;
+  }
+  
+  .emotion:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .emotion.selected {
+    background-color: rgba(255, 71, 87, 0.1);
+    box-shadow: 0 0 0 2px #ff4757;
+  }
+  
+  .filter-button {
+    background-color: #ff4757;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .filter-button:hover {
+    background-color: #ff6b81;
+  }
+  
+  /* Estilos para modal de detalles */
+  .anime-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s;
+  }
+  
+  .modal-content {
+    background-color: white;
+    width: 80%;
+    max-width: 900px;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow: auto;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    z-index: 10;
+  }
+  
+  .modal-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .modal-img {
+    flex: 0 0 200px;
+  }
+  
+  .modal-img img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-info {
+    flex: 1;
+  }
+  
+  .modal-info h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 24px;
+  }
+  
+  .modal-info h3 {
+    margin-top: 5px;
+    color: #666;
+    font-size: 16px;
+    font-weight: normal;
+  }
+  
+  .modal-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+  }
+  
+  .modal-emotions {
+    display: flex;
+    margin: 15px 0;
+  }
+  
+  .modal-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+  }
+  
+  .genre-tag {
+    background-color: #f1f1f1;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+  }
+  
+  .modal-body {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .modal-body h3 {
+    color: #333;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .trailer-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  
+  .trailer-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+  
+  /* Variantes de color para el modal */
+  .modal-content.anime-blue {
+    border-top: 5px solid #1e90ff;
+  }
+  
+  .modal-content.anime-pink {
+    border-top: 5px solid #ff6b81;
+  }
+  
+  .modal-content.anime-yellow {
+    border-top: 5px solid #ffa502;
+  }
+  
+  .modal-content.anime-purple {
+    border-top: 5px solid #5352ed;
+  }
+  
+  /* Mensaje de error */
+  .error-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: #ff4757;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  
+  .error-message.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  
+  /* Mensaje sin resultados */
+  .no-results {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #666;
+    grid-column: 1 / -1;
+  }
+  
+  /* Animaciones */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .modal-header {
+      flex-direction: column;
+    }
+    
+    .modal-img {
+      flex: 0 0 auto;
+      max-width: 150px;
+      margin: 0 auto;
+    }
+    
+    .modal-content {
+      width: 95%;
+      padding: 15px;
+    }
+    
+    .modal-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    /* Estilo básico para el indicador de carga */
+.loading-indicator {
+    display: none; /* Oculto por defecto */
+    text-align: center;
+    padding: 30px 20px; /* Más padding */
+    font-size: 1.1em; /* Tamaño ajustado */
+    color: var(--primary-color);
+    width: 100%; /* Ocupar ancho del contenedor */
+    grid-column: 1 / -1; /* Para que ocupe todo el ancho en el grid de tarjetas */
+  }
+  
+  .loading-indicator.show {
+    display: block; /* Mostrar cuando esté activo */
+  }
+  
+  /* Opcional: Un spinner simple con CSS */
+  .loading-indicator.show::before {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--primary-light);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+  }
+  
+  @keyframes spin {
+      to { transform: rotate(360deg); }
+  }
+
+  }

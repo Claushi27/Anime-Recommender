@@ -1,0 +1,193 @@
+/* CSS/detalle.css - Estilos para la página de detalles */
+
+/* Contenedor principal con padding */
+.detail-container {
+    padding: 30px;
+    background-color: var(--white); /* Fondo blanco por defecto */
+    border-radius: 15px; /* Bordes redondeados */
+    margin: 20px; /* Margen alrededor */
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08); /* Sombra suave */
+    transition: background-color 0.5s ease-in-out; /* Transición para cambio de fondo */
+}
+
+ Grid para layout de dos columnas */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr; /* Columna fija para imagen, resto flexible */
+    gap: 30px; /* Espacio entre columnas */
+}
+
+/* Estilos columna izquierda (imagen y botones) */
+.detail-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.detail-poster {
+    width: 100%;
+    max-width: 300px; /* Máximo ancho de la imagen */
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.action-buttons button {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border-radius: 25px;
+    border: none;
+    background-color: var(--primary-color);
+    color: var(--white);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.action-buttons button:hover {
+    background-color: #5b54d4; /* Un poco más oscuro al pasar el ratón */
+    transform: scale(1.02);
+}
+
+/* Estilos columna derecha (información) */
+.detail-right h1 {
+    font-size: 2.5em; /* Título más grande */
+    font-weight: bold;
+    color: var(--dark-text);
+    margin-bottom: 5px;
+}
+
+.detail-right h3 {
+    font-size: 1.2em;
+    color: var(--light-text);
+    font-weight: normal;
+    margin-bottom: 15px;
+}
+
+.detail-emotions,
+.detail-stats,
+.detail-genres {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espacio entre elementos */
+    align-items: center;
+}
+
+.detail-stats span {
+    color: var(--text-color);
+    font-size: 0.9em;
+    margin-right: 10px; /* Espacio entre stats */
+    white-space: nowrap;
+}
+
+.genre-tag { /* Reutilizamos y ajustamos estilo si es necesario */
+    background-color: #f0f0f0;
+    color: #555;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.8em;
+}
+
+.detail-right h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--dark-text);
+    margin-top: 30px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--primary-light); /* Línea separadora */
+    padding-bottom: 5px;
+}
+
+.detail-right p { /* Estilo para sinopsis */
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.detail-right ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.detail-right ul li {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+.detail-right ul li strong {
+    color: var(--dark-text);
+    min-width: 100px; /* Alineación */
+    display: inline-block;
+}
+
+.trailer-container { /* Reutilizar estilos del modal */
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+    overflow: hidden;
+    margin-top: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.trailer-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#anime-trailer-section.hidden { /* Para ocultar si no hay trailer */
+    display: none;
+}
+
+/* ---- Fondos basados en Emoción ---- */
+/* Añadimos colores de fondo suaves asociados a las emociones */
+/* Estos se aplicarían a .detail-container o incluso a body */
+
+.detail-container.emotion-bg-epic {
+    background-color: #fff0f1; /* Rosa muy pálido */
+}
+.detail-container.emotion-bg-tension {
+    background-color: #f0f0ff; /* Azul/lavanda muy pálido */
+}
+.detail-container.emotion-bg-sad {
+    background-color: #eef7ff; /* Azul cielo muy pálido */
+}
+.detail-container.emotion-bg-nostalgia {
+     background-color: #f5f5f5; /* Gris muy claro/nostálgico */
+}
+.detail-container.emotion-bg-happy {
+    background-color: #fff9e6; /* Amarillo/crema muy pálido */
+}
+.detail-container.emotion-bg-wonder {
+    background-color: #e6fff9; /* Verde agua/turquesa muy pálido */
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr; /* Una sola columna en móviles */
+    }
+    .detail-left {
+        order: 1; /* Mover imagen y botones arriba */
+        margin-bottom: 20px;
+    }
+    .detail-right {
+        order: 2;
+    }
+    .detail-right h1 {
+        font-size: 2em;
+    }
+    .detail-container {
+        margin: 10px;
+        padding: 20px;
+    }
+}
