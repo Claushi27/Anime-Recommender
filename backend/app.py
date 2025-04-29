@@ -222,9 +222,8 @@ def get_anime_details_by_id(anime_id):
 
 # --- Ejecutar Servidor (ELIMINADO o COMENTADO para producción) ---
 # if __name__ == '__main__':
-#     # debug=True NO es para producción
-#     # host='0.0.0.0' es necesario para que Render pueda acceder
-#     # El puerto lo asigna Render, no es necesario especificarlo aquí.
-#     # Gunicorn manejará esto.
-#     # app.run(debug=False, host='0.0.0.0')
-#     pass # Dejar vacío o eliminar el bloque if __name__...
+# --- Ejecutar Servidor (ELIMINADO o COMENTADO para producción) ---
+if __name__ == '__main__':
+    pass # <--- AÑADE ESTA LÍNEA INDENTADA
+#if __name__ == '__main__':
+  #app.run(debug=True, host='127.0.0.1', port=5000)

@@ -331,9 +331,13 @@ function setupEventListeners() {
   searchBar.addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && this.value.trim()) {
       const query = this.value.trim();
-      hideSuggestions();
-      clearPaginationState();
-      handleSearch(query); // Búsqueda completa tradicional
+      hideSuggestions(); // Ocultar sugerencias si estaban abiertas
+      // --- INICIO CAMBIO ---
+      // En lugar de llamar a handleSearch(query), redirigimos:
+      console.log(`Redirigiendo a página de búsqueda para: ${query}`);
+      // Usamos encodeURIComponent para asegurar que caracteres especiales en la búsqueda no rompan la URL
+      window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+      // --- FIN CAMBIO ---
     }
   });
 

@@ -27,10 +27,25 @@ async function delayedFetch(url) {
 // --- Funciones Jikan API ---
 
 // Buscar anime por nombre
-async function searchAnime(query, limit = 20) {
-  const url = `${JIKAN_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=${limit}&sfw=true`;
-  return delayedFetch(url);
+async function searchAnime(query, limit = 20, page = 1, options = {}) {
+  // Construir URL base
+  let url = `${JIKAN_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}&sfw=true`;
+
+  // Añadir filtros desde el objeto 'options'
+  if (options.type) url += `&type=${options.type}`;
+  if (options.status) url += `&status=${options.status}`;
+  if (options.rating) url += `&rating=${options.rating}`;
+  if (options.genres) url += `&genres=${options.genres}`; // Asume IDs de género separados por coma
+  if (options.score) url += `&score=${options.score}`; // Filtra >= score
+  if (options.start_date) url += `&start_date=${options.start_date}`; // YYYY-MM-DD
+  if (options.end_date) url += `&end_date=${options.end_date}`; // YYYY-MM-DD
+  if (options.order_by) url += `&order_by=${options.order_by}`;
+  if (options.sort) url += `&sort=${options.sort}`; // asc o desc
+
+  console.log(`Fetching from Jikan (Search): ${url}`);
+  return delayedFetch(url); // Devuelve objeto completo con data y pagination
 }
+
 
 // Obtener anime popular
 async function getPopularAnime(limit = 20) {
@@ -57,12 +72,9 @@ async function getAnimeDetails(animeId) {
 
 // Obtener anime por género (Asegúrate que 'sort=asc' es correcto para tu necesidad)
 async function getAnimeByGenre(genreId, limit = 20, page = 1) {
-  // Construir la URL incluyendo el parámetro 'page' para Jikan
-  const url = `${JIKAN_BASE_URL}/anime?genres=${genreId}&limit=${limit}&order_by=popularity&sort=asc&page=${page}`; // 'asc' según corrección anterior
+  const url = `${JIKAN_BASE_URL}/anime?genres=${genreId}&limit=${limit}&order_by=popularity&sort=asc&page=${page}`;
   console.log(`Fetching from Jikan (Genre): ${url}`);
-  // Usamos delayedFetch que ya maneja errores y devuelve el JSON completo
-  // La respuesta de Jikan incluirá 'data' y 'pagination'
-  return delayedFetch(url); // <--- Devuelve el objeto completo de Jikan
+  return delayedFetch(url);
 }
 
 // --- FUNCIÓN para llamar a TU Backend (ÚNICA DECLARACIÓN - CON PAGINACIÓN) ---
