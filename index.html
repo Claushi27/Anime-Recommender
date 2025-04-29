@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="es"> <head>
+<html lang="es">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AniEmotion - Recomendaciones de Anime por Emoción</title>
-  
-  <link rel="stylesheet" href="CSS/style.css"> 
-  <link rel="stylesheet" href="CSS/styles-additional.css"> 
-  
+
+  <link rel="stylesheet" href="CSS/style.css">
+  <link rel="stylesheet" href="CSS/styles-additional.css">
+
   <style>
     /* Estilo básico para el indicador de carga */
     .loading-indicator {
@@ -37,6 +38,87 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+
+    /* Estilos para autocompletado (Puedes moverlos a tu CSS) */
+    .search-bar {
+      position: relative; /* Necesario para posicionar el dropdown */
+    }
+    .suggestions-container {
+      display: none; /* Oculto por defecto */
+      position: absolute;
+      background-color: white;
+      border: 1px solid var(--border-color, #eee);
+      border-top: none; /* Quitar borde superior si se solapa bien */
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-height: 350px;
+      overflow-y: auto;
+      z-index: 100;
+      top: 100%; /* Justo debajo del input */
+      left: 0;
+    }
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color, #eee);
+      transition: background-color 0.2s;
+    }
+    .suggestion-item:last-child {
+      border-bottom: none;
+       border-radius: 0 0 8px 8px;
+    }
+    .suggestion-item:hover {
+      background-color: var(--primary-light, #f0f0ff);
+    }
+    .suggestion-item img {
+      width: 40px;
+      height: auto;
+      margin-right: 10px;
+      border-radius: 4px;
+    }
+    .suggestion-item span {
+      font-size: 0.9em;
+      color: var(--text-color, #333);
+      /* Evitar que texto largo rompa el layout */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Estilos paginación (Asegúrate de tenerlos en tu CSS) */
+    .pagination-container {
+        text-align: center;
+        margin-top: 25px;
+        margin-bottom: 20px;
+        padding: 10px;
+    }
+    .pagination-button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        margin: 0 10px;
+        font-weight: 500;
+        transition: background-color 0.2s, opacity 0.2s;
+    }
+    .pagination-button:hover:not(:disabled) {
+        background-color: #5b54d4;
+    }
+    .pagination-button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    .page-indicator {
+        display: inline-block;
+        margin: 0 15px;
+        font-size: 0.95em;
+        color: var(--text-color);
+    }
   </style>
 </head>
 <body>
@@ -44,19 +126,20 @@
     <div class="header">
         <div class="browse">
           <div class="browse-category">
-            Emociones
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down" width="18" height="18" style="margin-left: 5px;">
+            Emociones <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down" width="18" height="18" style="margin-left: 5px;">
               <path d="M6 9l6 6 6-6" />
             </svg>
           </div>
           <div class="search-bar">
-            <input type="text" placeholder="Buscar Anime..." /> </div>
-        </div>
+            <input type="text" placeholder="Buscar Anime..." />
+            <div id="search-suggestions" class="suggestions-container">
+              </div>
+          </div>
+          </div>
         <div class="header-title">ani<span>Emotion</span></div>
         <div class="profile">
           <div class="user-profile">
-            <img src="" alt="User profile" class="user-img" style="background-color: #eee; border: 1px solid #ccc;"> 
-          </div>
+            <img src="" alt="User profile" class="user-img" style="background-color: #eee; border: 1px solid #ccc;"> </div>
           <div class="profile-menu">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu" width="18" height="18" style="margin-right: 5px;">
               <path d="M3 12h18M3 6h18M3 18h18" />
@@ -75,7 +158,8 @@
     <div class="main-wrapper">
       <div class="emotions-of">
         <div class="emotion-category">
-          <div class="emotion-title">Filtrar por Emoción</div> <div class="emotion" data-emotion-tag="epic"> 
+          <div class="emotion-title">Filtrar por Emoción</div>
+          <div class="emotion" data-emotion-tag="epic">
             <div class="emotion-name">Épico / Emocionante</div>
           </div>
           <div class="emotion" data-emotion-tag="sad">
@@ -90,41 +174,40 @@
            <div class="emotion" data-emotion-tag="wonder">
              <div class="emotion-name">Asombro / Fascinación</div>
            </div>
-           <div class="emotion" data-emotion-tag="nostalgia"> <div class="emotion-name">Tierno / Emotivo</div>
+           <div class="emotion" data-emotion-tag="nostalgia">
+             <div class="emotion-name">Tierno / Emotivo</div>
            </div>
-          <button class="filter-button">Aplicar Filtro Emocional</button> </div>
+          <button class="filter-button">Aplicar Filtro Emocional</button>
+        </div>
 
         <div class="emotion-category year">
            <div class="emotion-title">Top del Año (Estático)</div>
            <p style="font-size: 0.9em; color: #666;">(Sección para desarrollo futuro)</p>
-        </div>
+           </div>
       </div>
 
       <div class="popular-anime">
-      
-        <div class="main-menu"> 
-          <div class="genre">Populares por Género</div> 
-          <div class="anime-types"> 
+        <div class="main-menu">
+          <div class="genre">Populares por Género</div>
+          <div class="anime-types">
             <a href="#" class="anime-type active">Todos</a>
             <a href="#" class="anime-type">Acción</a>
             <a href="#" class="anime-type">Drama</a>
             <a href="#" class="anime-type">Romance</a>
             <a href="#" class="anime-type">Comedia</a>
             <a href="#" class="anime-type">Fantasía</a>
-            </div>
+          </div>
         </div>
-        <div class="popular-anime">
 
-          <div class="main-menu">
-            </div>
-          <div class="loading-indicator" id="cards-loading">Cargando animes...</div>
-  
-          <div class="anime-cards">
-            </div>
-  
-          <div id="pagination-controls" class="pagination-container">
-              </div>
-          </div> </div> </div> <script type="module" src="main.js"></script>
-  
-  </body>
-  </html>
+        <div class="loading-indicator" id="cards-loading">Cargando animes...</div>
+
+        <div class="anime-cards">
+          </div>
+
+        <div id="pagination-controls" class="pagination-container">
+          </div>
+
+      </div> </div> </div> <script type="module" src="main.js"></script>
+
+</body>
+</html>

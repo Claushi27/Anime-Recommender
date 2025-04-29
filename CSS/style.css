@@ -547,3 +547,57 @@ body {
   font-size: 0.95em;
   color: var(--text-color);
 }
+/* styles.css o styles-additional.css */
+
+/* Contenedor relativo para posicionar el dropdown */
+.search-bar {
+  position: relative; /* Necesario para posicionar el dropdown absoluto */
+}
+
+/* Estilos para el contenedor de sugerencias */
+.suggestions-container {
+  display: none; /* Oculto por defecto */
+  position: absolute;
+  background-color: white;
+  border: 1px solid var(--border-color, #eee);
+  border-radius: 0 0 8px 8px; /* Redondeo solo abajo */
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  width: 100%; /* O el ancho del input si es diferente */
+  max-height: 350px; /* Altura máxima antes de scroll */
+  overflow-y: auto;
+  z-index: 100; /* Asegura que esté por encima de otro contenido */
+  top: 100%; /* Posicionar justo debajo del input */
+  left: 0;
+}
+
+/* Estilos para cada item de sugerencia */
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color, #eee);
+  transition: background-color 0.2s;
+}
+.suggestion-item:last-child {
+  border-bottom: none; /* Quitar borde del último item */
+   border-radius: 0 0 8px 8px; /* Redondeo abajo si es el último */
+}
+
+.suggestion-item:hover {
+  background-color: var(--primary-light, #f0f0ff);
+}
+
+.suggestion-item img {
+  width: 40px; /* Tamaño pequeño para la imagen */
+  height: auto; /* Ajustar altura automáticamente */
+  /* height: 55px; */ /* O altura fija si prefieres */
+  /* object-fit: cover; */
+  margin-right: 10px;
+  border-radius: 4px;
+}
+
+.suggestion-item span {
+  font-size: 0.9em;
+  color: var(--text-color, #333);
+}

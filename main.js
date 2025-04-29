@@ -1,4 +1,4 @@
-// main.js - Script principal (CON PAGINACIÓN PARA EMOCIONES Y GÉNEROS)
+// main.js - Script principal (CON PAGINACIÓN Y AUTOCOMPLETADO)
 
 // --- Importaciones ---
 import {
@@ -6,15 +6,16 @@ import {
   getPopularAnime,
   getSeasonalAnime,
   getAnimeDetails,
-  getAnimeByGenre, // <-- Importa la versión modificada para paginación Jikan
+  getAnimeByGenre,
   assignEmotions,
   getEmotionName,
   getEmotionColor,
-  getRecommendationsByEmotion // <-- Importa la versión modificada para paginación Backend
+  getRecommendationsByEmotion
 } from './api.js';
 
 // --- Elementos DOM ---
 const searchBar = document.querySelector('.search-bar input');
+const suggestionsContainer = document.getElementById('search-suggestions'); // Contenedor de sugerencias
 const animeSlideContainer = document.querySelector('.anime-slide .anime');
 const animeCardsContainer = document.querySelector('.anime-cards');
 const animeTypes = document.querySelectorAll('.anime-type');
@@ -24,16 +25,26 @@ const slideLoading = document.getElementById('slide-loading');
 const cardsLoading = document.getElementById('cards-loading');
 const paginationControlsContainer = document.getElementById('pagination-controls');
 
-// --- Variables de Estado para Paginación ---
+// --- Variables de Estado ---
 let currentFilterType = null; // 'emotion' o 'genre'
 let currentEmotionPage = 1;
 let totalEmotionPages = 0;
 let currentEmotionTag = null;
-
 let currentGenrePage = 1;
 let totalGenrePages = 0;
 let currentGenreId = null;
 let currentGenreName = null;
+let debounceTimer; // Para autocompletado
+
+// --- Función Debounce ---
+function debounce(func, delay) {
+  return function(...args) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
 
 // --- Funciones de Carga ---
 function showLoading(element, message = "Cargando...") {
@@ -124,14 +135,9 @@ function updateAnimeSlide(animes) {
 // --- Cargar Populares Iniciales (Usa Jikan) ---
 async function loadPopularAnime() {
   try {
-    // Llama a getPopularAnime (que usa /top/anime). La paginación aquí podría no funcionar
-    // dependiendo de la API Jikan para este endpoint específico.
-    const popularData = await getPopularAnime(20); // Pide los 20 más populares
+    const popularData = await getPopularAnime(20);
     if (popularData?.data) {
       displayAnimeCards(popularData.data);
-      // No mostramos controles de paginación aquí intencionadamente,
-      // ya que es la carga inicial de "populares".
-      // Si se quisiera paginar TODO desde el inicio, habría que llamar a handleGenreFilter('Todos', 1);
     } else {
       animeCardsContainer.innerHTML = '<div class="no-results">No se encontraron animes populares.</div>';
     }
@@ -143,12 +149,10 @@ async function loadPopularAnime() {
   }
 }
 
-
 // --- Mostrar Tarjetas ---
 function displayAnimeCards(animes) {
   animeCardsContainer.innerHTML = '';
    if (!animes || animes.length === 0) {
-      // El mensaje de "No hay resultados" se maneja ahora dentro de los handlers
       return;
   }
   animes.forEach(anime => {
@@ -191,16 +195,13 @@ function displayAnimeCards(animes) {
   });
 }
 
-
-// --- Mostrar Controles de Paginación (CON MANEJO DE CONTEXTO) ---
+// --- Mostrar Controles de Paginación ---
 function displayPaginationControls(paginationInfo, context) {
-    const paginationContainer = document.getElementById('pagination-controls');
-    if (!paginationContainer) return;
-    paginationContainer.innerHTML = '';
+    if (!paginationControlsContainer) return;
+    paginationControlsContainer.innerHTML = '';
 
-    let currentPage, totalPages, hasNextPage = false; // Default hasNextPage to false
+    let currentPage, totalPages, hasNextPage = false;
 
-    // Adaptar estructura según el contexto (Jikan o Backend)
     if (context === 'genre' && paginationInfo?.pagination) {
         currentPage = paginationInfo.pagination.current_page;
         totalPages = paginationInfo.pagination.last_visible_page;
@@ -208,23 +209,19 @@ function displayPaginationControls(paginationInfo, context) {
     } else if (context === 'emotion' && paginationInfo) {
         currentPage = paginationInfo.current_page;
         totalPages = paginationInfo.total_pages;
-        // Nuestro backend no envía 'has_next_page', lo calculamos
         hasNextPage = currentPage < totalPages;
     } else {
-         // Si la estructura no es válida o no hay suficientes páginas, salir.
         if (!paginationInfo || (!paginationInfo.pagination?.last_visible_page && !paginationInfo.total_pages) || Math.max(paginationInfo.pagination?.last_visible_page || 0, paginationInfo.total_pages || 0) <= 1) {
              return;
         }
-        console.warn("Estructura de paginación inesperada o inválida:", paginationInfo, "Contexto:", context);
-        // Intentar un fallback si es posible, aunque puede ser erróneo
+        console.warn("Estructura de paginación inesperada:", paginationInfo, "Contexto:", context);
         currentPage = paginationInfo.current_page || paginationInfo.pagination?.current_page || 1;
         totalPages = paginationInfo.total_pages || paginationInfo.pagination?.last_visible_page || 1;
         hasNextPage = paginationInfo.pagination?.has_next_page || (currentPage < totalPages);
     }
 
-    if (totalPages <= 1) return; // Salir si solo hay una página
+    if (totalPages <= 1) return;
 
-    // Botón Anterior
     const prevButton = document.createElement('button');
     prevButton.textContent = '‹ Anterior';
     prevButton.disabled = currentPage === 1;
@@ -232,34 +229,30 @@ function displayPaginationControls(paginationInfo, context) {
     prevButton.addEventListener('click', () => {
         if (context === 'emotion' && currentEmotionTag) {
             handleEmotionFilter([currentEmotionTag], currentPage - 1);
-        } else if (context === 'genre' && currentGenreName !== null) { // Usar nombre guardado
+        } else if (context === 'genre' && currentGenreName !== null) {
             handleGenreFilter(currentGenreName, currentPage - 1);
         }
     });
-    paginationContainer.appendChild(prevButton);
+    paginationControlsContainer.appendChild(prevButton);
 
-    // Indicador de página
     const pageIndicator = document.createElement('span');
     pageIndicator.textContent = `Página ${currentPage} de ${totalPages}`;
     pageIndicator.classList.add('page-indicator');
-    paginationContainer.appendChild(pageIndicator);
+    paginationControlsContainer.appendChild(pageIndicator);
 
-    // Botón Siguiente
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Siguiente ›';
-    // Deshabilitar si es la última página O si Jikan explícitamente dice que no hay siguiente
     nextButton.disabled = currentPage === totalPages || !hasNextPage;
     nextButton.classList.add('pagination-button', 'next');
     nextButton.addEventListener('click', () => {
          if (context === 'emotion' && currentEmotionTag) {
             handleEmotionFilter([currentEmotionTag], currentPage + 1);
-        } else if (context === 'genre' && currentGenreName !== null) { // Usar nombre guardado
+        } else if (context === 'genre' && currentGenreName !== null) {
             handleGenreFilter(currentGenreName, currentPage + 1);
         }
     });
-    paginationContainer.appendChild(nextButton);
+    paginationControlsContainer.appendChild(nextButton);
 }
-
 
 // --- Redirigir a Detalles ---
 function handleShowDetails(animeId) {
@@ -268,44 +261,135 @@ function handleShowDetails(animeId) {
   window.location.href = `detalle.html?id=${animeId}`;
 }
 
-// --- Setup Event Listeners (CON LIMPIEZA GENERAL) ---
+// --- Lógica Autocompletado ---
+function showSuggestions(animes) {
+  if (!suggestionsContainer) return;
+  suggestionsContainer.innerHTML = '';
+
+  if (!animes || animes.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  animes.forEach(anime => {
+    if (!anime?.mal_id || !anime.title) return;
+    const item = document.createElement('div');
+    item.classList.add('suggestion-item');
+    item.dataset.id = anime.mal_id;
+
+    const imgUrl = anime.images?.jpg?.image_url || '';
+    const title = anime.title;
+
+    item.innerHTML = `
+      ${imgUrl ? `<img src="${imgUrl}" alt="" loading="lazy">` : '<div style="width:40px; height:55px; background:#eee; margin-right:10px; border-radius:4px;"></div>'}
+      <span>${title}</span>
+    `;
+
+    item.addEventListener('click', () => {
+      searchBar.value = title;
+      hideSuggestions();
+      handleShowDetails(anime.mal_id); // Ir a detalles al hacer clic
+    });
+
+    suggestionsContainer.appendChild(item);
+  });
+
+  suggestionsContainer.style.display = 'block';
+}
+
+function hideSuggestions() {
+  if (suggestionsContainer) {
+    suggestionsContainer.style.display = 'none';
+    // No limpiamos innerHTML aquí para que no parpadee si el usuario vuelve rápido
+  }
+}
+
+async function handleAutocompleteSearch(query) {
+  if (query.length < 3) {
+    hideSuggestions();
+    return;
+  }
+  console.log(`Buscando sugerencias para: ${query}`);
+  try {
+    const results = await searchAnime(query, 5); // Jikan, límite 5
+    if (results?.data) {
+      showSuggestions(results.data);
+    } else {
+      hideSuggestions();
+    }
+  } catch (error) {
+    console.error('Error buscando sugerencias:', error);
+    hideSuggestions();
+  }
+}
+
+const debouncedAutocompleteSearch = debounce(handleAutocompleteSearch, 400); // 400ms delay
+
+// --- Setup Event Listeners (Añadido Autocompletado) ---
 function setupEventListeners() {
-  // Buscador
+  // Búsqueda: Enter
   searchBar.addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && this.value.trim()) {
-        clearPaginationState(); // <--- Limpieza General
-        handleSearch(this.value.trim());
+      const query = this.value.trim();
+      hideSuggestions();
+      clearPaginationState();
+      handleSearch(query); // Búsqueda completa tradicional
     }
   });
-  // Filtro por tipo de anime (géneros)
+
+  // Búsqueda: Input (Autocompletado)
+  searchBar.addEventListener('input', function() {
+    const query = this.value.trim();
+    if (query.length === 0) {
+      hideSuggestions();
+    } else if (query.length >= 3) {
+      debouncedAutocompleteSearch(query);
+    } else {
+      // Si tiene 1 o 2 caracteres, ocultar por si acaso había algo antes
+      hideSuggestions();
+    }
+  });
+
+  // Ocultar sugerencias al hacer clic fuera
+  document.addEventListener('click', function(event) {
+      if (!searchBar.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+          hideSuggestions();
+      }
+  });
+
+  // Filtro Género
   animeTypes.forEach(type => {
     type.addEventListener('click', function(e) {
       e.preventDefault();
       document.querySelector('.anime-type.active')?.classList.remove('active');
       this.classList.add('active');
-      clearPaginationState(); // <--- Limpieza General
-      handleGenreFilter(this.textContent, 1); // Ir a página 1 del género
+      hideSuggestions(); // Ocultar sugerencias al cambiar filtro
+      clearPaginationState();
+      handleGenreFilter(this.textContent, 1);
     });
   });
-  // Filtro por emoción (Botón)
+
+  // Filtro Emoción
   filterButton.addEventListener('click', function() {
     const selectedEmotionTags = Array.from(document.querySelectorAll('.emotion.selected'))
                                      .map(el => el.dataset.emotionTag)
                                      .filter(tag => tag);
     if (selectedEmotionTags.length > 0) {
-      clearPaginationState(); // <--- Limpieza General
-      handleEmotionFilter(selectedEmotionTags, 1); // Ir a página 1 de la emoción
+      hideSuggestions(); // Ocultar sugerencias al cambiar filtro
+      clearPaginationState();
+      handleEmotionFilter(selectedEmotionTags, 1);
     } else {
       showErrorMessage('Selecciona al menos una emoción para filtrar.');
     }
   });
-  // Seleccionar/Deseleccionar emociones
+
+  // Selección Emoción
   emotionCategories.forEach(emotion => {
     emotion.addEventListener('click', function() { this.classList.toggle('selected'); });
   });
 }
 
-// --- Limpiar estado de paginación (GENERALIZADO) ---
+// --- Limpiar estado de paginación ---
 function clearPaginationState() {
     currentFilterType = null;
     currentEmotionPage = 1;
@@ -316,19 +400,22 @@ function clearPaginationState() {
     currentGenreId = null;
     currentGenreName = null;
     if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
+    // También ocultar sugerencias por si acaso
+    hideSuggestions();
 }
 
-// --- Búsqueda (Usa Jikan) ---
+// --- Búsqueda Completa ---
 async function handleSearch(query) {
-  // No necesita paginación aquí generalmente, muestra top results
-  clearPaginationState(); // Limpiar por si acaso
+  clearPaginationState();
   showLoading(cardsLoading, `Buscando "${query}"...`);
   animeCardsContainer.innerHTML = '';
-  if (paginationControlsContainer) paginationControlsContainer.innerHTML = ''; // Limpiar controles
+  if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
   try {
-    const results = await searchAnime(query);
+    const results = await searchAnime(query, 20); // Pedir más resultados para la búsqueda completa
     if (results?.data?.length > 0) {
       displayAnimeCards(results.data);
+      // Aquí podríamos implementar paginación para búsqueda si quisiéramos
+      // displayPaginationControls(results.pagination, 'search'); // Necesitaríamos un contexto 'search'
     } else {
       animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron resultados para "${query}"</div>`;
     }
@@ -341,64 +428,55 @@ async function handleSearch(query) {
   }
 }
 
-// --- Filtro Género (Usa Jikan - CON PAGINACIÓN) ---
+// --- Filtro Género (CON PAGINACIÓN) ---
 async function handleGenreFilter(genreName, page = 1) {
     currentFilterType = 'genre';
     currentGenrePage = page;
-    currentGenreName = genreName; // Guardar nombre para usar en botones de paginación
+    currentGenreName = genreName;
 
     showLoading(cardsLoading, `Cargando ${genreName} (Pág. ${page})...`);
     animeCardsContainer.innerHTML = '';
-    if (paginationControlsContainer) paginationControlsContainer.innerHTML = ''; // Limpiar controles
+    if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
 
     const genreMap = { 'Todos': 0, 'Acción': 1, 'Drama': 8, 'Romance': 22, 'Comedia': 4, 'Fantasía': 10 };
     const genreId = genreMap[genreName];
-    currentGenreId = genreId; // Guardar ID (puede ser undefined para "Todos")
+    currentGenreId = genreId;
 
     try {
         let responseData;
         if (genreName === 'Todos') {
-            // Para "Todos", usamos /anime sin filtro de género, ordenado por popularidad
-            const url = `${JIKAN_BASE_URL}/anime?order_by=popularity&sort=asc&limit=20&page=${page}`;
+            const url = `${JIKAN_BASE_URL}/anime?order_by=popularity&sort=asc&limit=20&page=${page}&sfw=true`;
             console.log(`Fetching from Jikan (All Genres - Popular): ${url}`);
-            responseData = await delayedFetch(url); // Usamos delayedFetch directamente
+            responseData = await delayedFetch(url);
         } else if (genreId !== undefined) {
-             // Para géneros específicos, usamos getAnimeByGenre (que ya incluye page)
             responseData = await getAnimeByGenre(genreId, 20, page);
         } else {
-             // Género no mapeado, mostrar error o populares sin paginación?
              console.warn(`Género "${genreName}" no mapeado.`);
              showErrorMessage(`Género "${genreName}" no reconocido.`);
-             responseData = await getPopularAnime(20); // Cargar populares sin paginar como fallback
-             // Limpiar estado de paginación en este caso
+             responseData = await getPopularAnime(20); // Fallback sin paginación
              clearPaginationState();
         }
 
-        // Procesar la respuesta (puede tener 'data' y 'pagination')
         if (responseData && responseData.data && responseData.pagination) {
             const animeList = responseData.data;
-            const paginationInfo = responseData; // Jikan devuelve el objeto completo
-
-            totalGenrePages = paginationInfo.pagination.last_visible_page; // Actualizar total
-
+            const paginationInfo = responseData;
+            totalGenrePages = paginationInfo.pagination.last_visible_page;
             if (animeList.length > 0) {
               displayAnimeCards(animeList);
-              displayPaginationControls(paginationInfo, 'genre'); // <-- Contexto 'genre'
+              displayPaginationControls(paginationInfo, 'genre');
             } else {
                  if (page === 1) {
                     animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para ${genreName}.</div>`;
                  } else {
-                     animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados para mostrar (Pág. ${page}) para ${genreName}.</div>`;
+                     animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}) para ${genreName}.</div>`;
                      displayPaginationControls(paginationInfo, 'genre');
                  }
             }
         } else if (responseData && responseData.data && !responseData.pagination && page === 1) {
-            // Caso especial: Respuesta sin paginación (quizás fallback de populares)
              displayAnimeCards(responseData.data);
-             console.warn("Respuesta procesada pero sin información de paginación.");
-        }
-        else {
-             throw new Error(`La respuesta de Jikan para ${genreName} no tiene el formato esperado.`);
+             console.warn("Respuesta Jikan sin información de paginación.");
+        } else {
+             throw new Error(`La respuesta de Jikan para ${genreName} (Pág. ${page}) no tiene el formato esperado.`);
         }
     } catch (error) {
         console.error(`Error filtrando por género ${genreName} (Pág. ${page}):`, error);
@@ -410,7 +488,7 @@ async function handleGenreFilter(genreName, page = 1) {
     }
 }
 
-// --- Filtro Emoción (Usa Backend - CON PAGINACIÓN Y CONTEXTO) ---
+// --- Filtro Emoción (CON PAGINACIÓN) ---
 async function handleEmotionFilter(selectedTags, page = 1) {
     currentFilterType = 'emotion';
     const emotionTag = selectedTags[0];
@@ -423,13 +501,12 @@ async function handleEmotionFilter(selectedTags, page = 1) {
     console.log(`Usando API local para buscar emoción: ${emotionTag}, Página: ${page}`);
 
     try {
-        const responseData = await getRecommendationsByEmotion(emotionTag, page, 20); // Llama a api.js
+        const responseData = await getRecommendationsByEmotion(emotionTag, page, 20);
 
         if (responseData && responseData.recommendations && responseData.pagination) {
             const recommendations = responseData.recommendations;
-            const paginationInfo = responseData.pagination; // Usamos la info del backend
-
-            totalEmotionPages = paginationInfo.total_pages; // Actualizar total
+            const paginationInfo = responseData.pagination;
+            totalEmotionPages = paginationInfo.total_pages;
 
             if (recommendations.length > 0) {
                  const mappedRecommendations = recommendations.map(anime_backend => {
@@ -444,12 +521,12 @@ async function handleEmotionFilter(selectedTags, page = 1) {
                     };
                 });
                 displayAnimeCards(mappedRecommendations);
-                displayPaginationControls(paginationInfo, 'emotion'); // <-- Contexto 'emotion'
+                displayPaginationControls(paginationInfo, 'emotion');
             } else {
                  if (page === 1) {
                     animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para la emoción: ${getEmotionName(emotionTag)}.</div>`;
                  } else {
-                     animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados para mostrar (Pág. ${page}).</div>`;
+                     animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}).</div>`;
                      displayPaginationControls(paginationInfo, 'emotion');
                  }
             }
@@ -457,7 +534,7 @@ async function handleEmotionFilter(selectedTags, page = 1) {
              throw new Error("La respuesta del backend no tiene el formato esperado.");
         }
     } catch (error) {
-        console.error('Error al obtener/procesar recomendaciones del backend (Pág. ${page}):', error);
+        console.error(`Error al obtener/procesar recomendaciones del backend (Pág. ${page}):`, error);
         showErrorMessage(`Error al buscar por emoción: ${error.message}`);
         animeCardsContainer.innerHTML = `<div class="no-results">Ocurrió un error al buscar recomendaciones. <br><small>${error.message}</small></div>`;
         clearPaginationState();
