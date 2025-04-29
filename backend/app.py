@@ -9,6 +9,14 @@ import time
 import math
 import pandas as pd # <--- Necesitamos Pandas aquí para ordenar fácil
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+STATIC_FOLDER = BASE_DIR # O la ruta a tu carpeta CSS/JS si está separada
+TEMPLATE_FOLDER = BASE_DIR # Asumiendo que index.html está en la raíz del proyecto
+
+app = Flask(__name__,
+            static_folder=STATIC_FOLDER,
+            template_folder=TEMPLATE_FOLDER,
+            static_url_path='')
 # --- Mapeo TAGS a Emociones y Funciones Helper (SIN CAMBIOS) ---
 tag_emotion_map = { # ... (tu mapeo completo) ...
     'action': ['epic', 'tension'], 'adventure': ['epic', 'wonder'],
