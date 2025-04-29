@@ -1,7 +1,7 @@
 // api.js - Manejo de llamadas a Jikan API y Backend Local (CORREGIDO Y SIN DUPLICADOS)
 
 const JIKAN_BASE_URL = 'https://api.jikan.moe/v4';
-const LOCAL_BACKEND_URL = 'http://127.0.0.1:5000'; // URL base de tu backend Flask
+const LOCAL_BACKEND_URL = ''; // URL base de tu backend Flask
 
 // Función para manejar retrasos entre solicitudes (evitar rate limiting en Jikan)
 async function delayedFetch(url) {
