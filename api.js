@@ -25,7 +25,17 @@ async function delayedFetch(url) {
 }
 
 // --- Funciones Jikan API ---
+// En api.js
+async function getLatestSeasonalAnime(limit = 15) {
+  // URL CORREGIDA - Usando la alternativa que probamos antes, o puedes volver a /seasons/now si prefieres
+  const url = `${JIKAN_BASE_URL}/top/anime?filter=airing&limit=${limit}&sfw=true&page=1`;
+  // O si prefieres usar /seasons/now:
+  // const url = `${JIKAN_BASE_URL}/seasons/now?limit=${limit}&sfw=true&page=1`;
 
+  console.log(`>>> URL EXACTA para Latest Seasonal: ${url}`); // Mantenemos el log para verificar
+  console.log(`Fetching from Jikan (Latest Seasonal): ${url}`);
+  return delayedFetch(url); // Llama a la función fetch
+}
 // Buscar anime por nombre
 async function searchAnime(query, limit = 20, page = 1, options = {}) {
   // Construir URL base
@@ -54,7 +64,7 @@ async function getPopularAnime(limit = 20) {
 }
 
 // Obtener anime por temporada
-async function getSeasonalAnime(year = 'now', season = '') {
+async function getSeasonalAnime(year = 'now', season = '', limit  = 10) {
   let url;
   if (year === 'now') {
     url = `${JIKAN_BASE_URL}/seasons/now?limit=20`;
@@ -144,13 +154,19 @@ function getEmotionName(tag) {
   return emotionNames[tag] || tag;
 }
 
-// Obtener color CSS para la emoción
 function getEmotionColor(emotion) {
-  const emotionColors = {
-    'epic': '', 'tension': 'anime-purple', 'sad': 'anime-blue',
-    'nostalgia': 'anime-blue', 'happy': 'anime-pink', 'wonder': 'anime-yellow'
+  // Mapea la emoción al nombre de clase CSS que SÍ tienes definido
+  // en style.css y styles-additional.css
+  const emotionCssClasses = {
+    'epic': 'epic',         // Usa la clase .epic
+    'tension': 'tension',   // Usa la clase .tension
+    'sad': 'sad',           // Usa la clase .sad
+    'nostalgia': 'nostalgia', // Usa la clase .nostalgia
+    'happy': 'happy',       // Usa la clase .happy
+    'wonder': 'wonder'      // Usa la clase .wonder
   };
-  return emotionColors[emotion] || '';
+  // Devuelve la clase correspondiente o una clase por defecto (ej. 'epic') si no se encuentra
+  return emotionCssClasses[emotion] || 'epic';
 }
 
 // --- Exportaciones ---
@@ -163,5 +179,6 @@ export {
   assignEmotions,
   getEmotionName,
   getEmotionColor,
+  getLatestSeasonalAnime,
   getRecommendationsByEmotion // <-- Asegurándose que se exporta la versión correcta (y única)
 };
