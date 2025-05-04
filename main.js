@@ -1,33 +1,38 @@
-// main.js - Script principal (CON PAGINACIÓN, AUTOCOMPLETADO Y ÚLTIMOS LANZAMIENTOS)
+// main.js - Versión COMPLETA para Banner Info/Imagen Refinado
 
 // --- Importaciones ---
 import {
   searchAnime,
   getPopularAnime,
   getSeasonalAnime, // Usado para el slider inicial
-  getAnimeDetails,  // Aunque no se usa directamente aquí, podría ser útil
+  getAnimeDetails,
   getAnimeByGenre,
   assignEmotions,
   getEmotionName,
   getEmotionColor,
   getRecommendationsByEmotion,
-  getLatestSeasonalAnime // <-- Nueva importación
+  getLatestSeasonalAnime
 } from './api.js';
 
 // --- Elementos DOM ---
 const searchBar = document.querySelector('.search-bar input');
 const suggestionsContainer = document.getElementById('search-suggestions');
-const animeSlideContainer = document.querySelector('.anime-slide .anime');
-const animeCardsContainer = document.getElementById('popular-cards'); // ID actualizado en HTML
+// RESTAURADO: Elementos Banner
+const bannerSlidesContainer = document.getElementById('banner-slides-content');
+const bannerDotsContainer = document.getElementById('banner-dots-container');
+const bannerPrevButton = document.getElementById('banner-prev');
+const bannerNextButton = document.getElementById('banner-next');
+const slideLoading = document.getElementById('slide-loading');
+// Otros elementos
+const animeCardsContainer = document.getElementById('popular-cards');
 const animeTypes = document.querySelectorAll('.anime-type');
 const filterButton = document.querySelector('.filter-button');
 const emotionCategories = document.querySelectorAll('.emotion');
-const slideLoading = document.getElementById('slide-loading');
 const cardsLoading = document.getElementById('cards-loading');
 const paginationControlsContainer = document.getElementById('pagination-controls');
-// Nuevos elementos para la sección de lanzamientos
-const latestReleasesContainer = document.getElementById('latest-releases-cards'); // <-- Nuevo
-const latestReleasesLoading = document.getElementById('latest-releases-loading'); // <-- Nuevo
+const latestReleasesContainer = document.getElementById('latest-releases-cards');
+const latestReleasesLoading = document.getElementById('latest-releases-loading');
+const headerElement = document.querySelector('.header'); // Para controlar el header
 
 // --- Variables de Estado ---
 let currentFilterType = null;
@@ -39,10 +44,11 @@ let totalGenrePages = 0;
 let currentGenreId = null;
 let currentGenreName = null;
 let debounceTimer;
-let bannerSlides = []; // Array para guardar los elementos slide
-let bannerDots = []; // Array para guardar los puntos
+// RESTAURADO: Variables Banner
+let bannerSlides = [];
+let bannerDots = [];
 let currentBannerIndex = 0;
-let bannerInterval; 
+let bannerInterval;
 
 // --- Función Debounce ---
 function debounce(func, delay) {
@@ -69,119 +75,144 @@ function hideLoading(element) {
 
 // --- Inicializar App ---
 async function initApp() {
-  showLoading(slideLoading, "Cargando destacados...");
-  showLoading(cardsLoading, "Cargando populares...");
-  // Mostrar carga inicial para la nueva sección
+  // Mostrar loadings iniciales
+  if (slideLoading) showLoading(slideLoading, "Cargando destacados...");
+  if (cardsLoading) showLoading(cardsLoading, "Cargando populares...");
   if (latestReleasesLoading) showLoading(latestReleasesLoading, "Cargando últimos lanzamientos...");
 
   try {
+    // Cargar todo en paralelo
     await Promise.all([
-      loadFeaturedAnime(),
-      loadPopularAnime(),
-      loadLatestReleases() // <-- Llamada a la nueva función
+      loadFeaturedAnime(), // Cargar banner
+      loadPopularAnime(),  // Cargar populares
+      loadLatestReleases() // Cargar lanzamientos
     ]);
+    // Configurar listeners después de cargar datos iniciales si es necesario
     setupEventListeners();
   } catch (error) {
     console.error('Error inicializando la aplicación:', error);
     showErrorMessage('Error cargando datos iniciales. Intenta recargar.');
   } finally {
-      hideLoading(slideLoading);
-      hideLoading(cardsLoading);
-      // Ocultar carga de la nueva sección
+      // Ocultar loadings
+      if (slideLoading) hideLoading(slideLoading);
+      if (cardsLoading) hideLoading(cardsLoading);
       if (latestReleasesLoading) hideLoading(latestReleasesLoading);
   }
 }
 
-// --- Cargar Slider (Usa Jikan - getSeasonalAnime) ---
+// --- Cargar y Configurar Banner (Restaurado y Refinado) ---
 async function loadFeaturedAnime() {
-  const slideLoadingIndicator = document.getElementById('slide-loading'); // Asegúrate que el ID es correcto
-  const bannerSlidesContainer = document.getElementById('banner-slides-content');
-
-  if (!bannerSlidesContainer || !slideLoadingIndicator) {
+  if (!bannerSlidesContainer || !slideLoading ) {
       console.error("Elementos del banner no encontrados");
-      // Ocultar loading si existe aunque falle
-      if (slideLoadingIndicator) hideLoading(slideLoadingIndicator);
+      if (slideLoading) hideLoading(slideLoading);
+      if(bannerPrevButton) bannerPrevButton.style.display = 'none';
+      if(bannerNextButton) bannerNextButton.style.display = 'none';
+      if(bannerDotsContainer) bannerDotsContainer.style.display = 'none';
       return;
   }
 
-  showLoading(slideLoadingIndicator, "Cargando destacados...");
+  showLoading(slideLoading, "Cargando destacados...");
   try {
-      // Usamos getSeasonalAnime con un límite pequeño (ej. 5)
-      const seasonalData = await getSeasonalAnime(undefined, undefined, 5);
+      const seasonalData = await getSeasonalAnime(undefined, undefined, 5); // 5 slides
 
       if (seasonalData?.data && seasonalData.data.length > 0) {
-         setupBannerSlider(seasonalData.data); // Llama a la nueva función de configuración
+         setupBannerSlider(seasonalData.data);
       } else {
          bannerSlidesContainer.innerHTML = '<p style="color: white; text-align: center; padding: 50px;">No se encontraron animes destacados.</p>';
+         if(bannerPrevButton) bannerPrevButton.style.display = 'none';
+         if(bannerNextButton) bannerNextButton.style.display = 'none';
+         if(bannerDotsContainer) bannerDotsContainer.style.display = 'none';
       }
   } catch (error) {
       console.error('Error cargando anime para banner (Jikan):', error);
       if (bannerSlidesContainer) bannerSlidesContainer.innerHTML = '<p style="color: white; text-align: center; padding: 50px;">Error al cargar destacados.</p>';
       showErrorMessage('Error al cargar destacados para banner.');
+       if(bannerPrevButton) bannerPrevButton.style.display = 'none';
+       if(bannerNextButton) bannerNextButton.style.display = 'none';
+       if(bannerDotsContainer) bannerDotsContainer.style.display = 'none';
   } finally {
-      hideLoading(slideLoadingIndicator);
+      hideLoading(slideLoading);
   }
 }
+
+// --- Configuración del Banner Slider (Info 40% / Imagen 60%) ---
 function setupBannerSlider(animes) {
-  const slidesContainer = document.getElementById('banner-slides-content');
-  const dotsContainer = document.getElementById('banner-dots-container');
-  const prevButton = document.getElementById('banner-prev');
-  const nextButton = document.getElementById('banner-next');
+  if (!bannerSlidesContainer || !bannerDotsContainer || !bannerPrevButton || !bannerNextButton) return;
 
-  if (!slidesContainer || !dotsContainer || !prevButton || !nextButton) {
-      console.error("Faltan elementos para inicializar el banner slider.");
-      return;
-  }
+  bannerPrevButton.style.display = 'block';
+  bannerNextButton.style.display = 'block';
+  bannerDotsContainer.style.display = 'flex';
 
-  slidesContainer.innerHTML = ''; // Limpiar slides anteriores
-  dotsContainer.innerHTML = ''; // Limpiar dots anteriores
-  bannerSlides = []; // Limpiar array de slides
-  bannerDots = []; // Limpiar array de dots
-  currentBannerIndex = 0; // Resetear índice
+  bannerSlidesContainer.innerHTML = '';
+  bannerDotsContainer.innerHTML = '';
+  bannerSlides = [];
+  bannerDots = [];
+  currentBannerIndex = 0;
 
-  // Crear los slides y los dots
   animes.forEach((anime, index) => {
-      // Crear Slide
       const slide = document.createElement('div');
       slide.classList.add('banner-slide');
-      // Imagen de fondo: usar la imagen 'large' si está disponible
+
+      const infoPanel = document.createElement('div');
+      infoPanel.classList.add('banner-info-panel');
+
+      const title = anime.title || 'Título no disponible';
+      const synopsis = truncateText(anime.synopsis, 130);
+      const type = anime.type || 'N/A';
+      let duration = anime.duration || '';
+      if (duration.includes('min per ep')) duration = duration.replace(' per ep', '');
+      else if (duration.includes('hr')) duration = duration.replace('hr', 'h').replace('min','m');
+
+      const aired = anime.aired?.string || '';
+      const rating = anime.rating || '';
+      const score = anime.score ? `${anime.score.toFixed(1)}` : '';
+      const mal_id = anime.mal_id;
+      const primaryEmotion = assignEmotions(anime.genres)[0] || 'epic';
+
+      // Usar Font Awesome (si está incluido) o texto simple
+      const iconType = '<i class="fas fa-tv"></i>'; // Asegúrate de tener Font Awesome
+      const iconClock = '<i class="far fa-clock"></i>';
+      const iconCalendar = '<i class="far fa-calendar-alt"></i>';
+      const iconShield = '<i class="fas fa-user-shield"></i>';
+      const iconStar = '<i class="fas fa-star"></i>';
+
+      infoPanel.innerHTML = `
+          <span class="banner-spotlight" style="color: var(--primary-color); font-weight: bold;">#${index + 1} Spotlight</span>
+          <h2 class="banner-title">${title}</h2>
+          <div class="banner-meta">
+              ${type ? `<span>${iconType} ${type}</span>` : ''}
+              ${duration ? `<span>${iconClock} ${duration}</span>` : ''}
+              ${aired ? `<span>${iconCalendar} ${aired}</span>` : ''}
+              ${rating ? `<span>${iconShield} ${rating}</span>` : ''}
+              ${score ? `<span class="score">${iconStar} ${score}</span>` : ''}
+          </div>
+          <p class="banner-synopsis">${synopsis}</p>
+          <div class="banner-actions">
+              <button class="btn btn-detail" data-id="${mal_id}">Detalles</button>
+              </div>
+      `;
+
+      const imagePanel = document.createElement('div');
+      imagePanel.classList.add('banner-image-panel');
       const imageUrl = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
       if (imageUrl) {
-          slide.style.backgroundImage = `url('${imageUrl}')`;
+          imagePanel.style.backgroundImage = `url('${imageUrl}')`;
+      } else {
+          imagePanel.innerHTML = '<div class="placeholder">Sin Imagen</div>';
       }
 
-      // Contenido del slide
-      slide.innerHTML = `
-          <div class="banner-overlay"></div>
-          <div class="banner-content">
-              <span class="banner-spotlight">#${index + 1} Spotlight</span>
-              <h2 class="banner-title">${anime.title || 'Título no disponible'}</h2>
-              <div class="banner-meta">
-                  <span>${anime.type || 'N/A'}</span>
-                  ${anime.duration ? `<span>${anime.duration}</span>` : ''}
-                  ${anime.aired?.string ? `<span>${anime.aired.string}</span>` : ''}
-                  ${anime.rating ? `<span>${anime.rating}</span>` : ''}
-                  ${/* Podrías añadir más info como score aquí */''}
-                  ${anime.score ? `<span>★ ${anime.score.toFixed(1)}</span>` : ''}
-              </div>
-              <p class="banner-synopsis">${truncateText(anime.synopsis, 150)}</p>
-              <div class="banner-actions">
-                  <button class="btn btn-detail" data-id="${anime.mal_id}">Detalles</button>
-              </div>
-          </div>
-      `;
-      slidesContainer.appendChild(slide);
+      slide.appendChild(infoPanel);
+      slide.appendChild(imagePanel);
+      bannerSlidesContainer.appendChild(slide);
       bannerSlides.push(slide);
 
-      // Crear Dot
       const dot = document.createElement('button');
       dot.classList.add('banner-dot');
-      dot.dataset.index = index; // Guardar índice para el clic
-      dotsContainer.appendChild(dot);
+      dot.dataset.index = index;
+      bannerDotsContainer.appendChild(dot);
       bannerDots.push(dot);
 
-      // Añadir listener al botón de detalles dentro del slide
-      const detailButton = slide.querySelector('.btn-detail');
+      const detailButton = infoPanel.querySelector('.btn-detail');
       if (detailButton) {
           detailButton.addEventListener('click', function() {
               handleShowDetails(this.dataset.id);
@@ -189,116 +220,59 @@ function setupBannerSlider(animes) {
       }
   });
 
-  // Función para mostrar un slide específico
   function showSlide(index) {
-      bannerSlides.forEach((slide, i) => {
-          slide.classList.toggle('active', i === index); // Añade/quita 'active'
-      });
-      bannerDots.forEach((dot, i) => {
-          dot.classList.toggle('active', i === index); // Activa el dot correspondiente
-      });
-      currentBannerIndex = index; // Actualiza el índice global
+      if (index >= bannerSlides.length || index < 0) return;
+      bannerSlides.forEach((slide, i) => { slide.classList.toggle('active', i === index); });
+      bannerDots.forEach((dot, i) => { dot.classList.toggle('active', i === index); });
+      currentBannerIndex = index;
   }
 
-  // Funciones para navegar
   function nextSlide() {
       let newIndex = (currentBannerIndex + 1) % bannerSlides.length;
       showSlide(newIndex);
   }
-
   function prevSlide() {
       let newIndex = (currentBannerIndex - 1 + bannerSlides.length) % bannerSlides.length;
       showSlide(newIndex);
   }
 
-  // Event listeners para flechas
-  prevButton.addEventListener('click', () => {
-      prevSlide();
-      resetBannerInterval(); // Reiniciar timer al navegar manualmente
-  });
-  nextButton.addEventListener('click', () => {
-      nextSlide();
-      resetBannerInterval(); // Reiniciar timer al navegar manualmente
-  });
+  if(bannerPrevButton) bannerPrevButton.addEventListener('click', () => { prevSlide(); resetBannerInterval(); });
+  if(bannerNextButton) bannerNextButton.addEventListener('click', () => { nextSlide(); resetBannerInterval(); });
 
-  // Event listeners para dots
   bannerDots.forEach(dot => {
       dot.addEventListener('click', (e) => {
           const index = parseInt(e.target.dataset.index, 10);
-          showSlide(index);
-          resetBannerInterval(); // Reiniciar timer al navegar manualmente
+          if (!isNaN(index)) { showSlide(index); resetBannerInterval(); }
       });
   });
 
-  // Intervalo para cambio automático
   function startBannerInterval() {
-      // Limpiar intervalo anterior si existe
       clearInterval(bannerInterval);
-      bannerInterval = setInterval(nextSlide, 6000); // Cambiar cada 6 segundos (ajusta)
+      bannerInterval = setInterval(nextSlide, 7000);
   }
-
   function resetBannerInterval() {
       clearInterval(bannerInterval);
-      bannerInterval = setInterval(nextSlide, 6000);
+      bannerInterval = setInterval(nextSlide, 7000);
   }
 
-  // Mostrar el primer slide inicialmente y empezar intervalo
   if (bannerSlides.length > 0) {
       showSlide(0);
       startBannerInterval();
+      if(bannerSlidesContainer) { // Asegurarse que existe
+        bannerSlidesContainer.addEventListener('mouseenter', () => clearInterval(bannerInterval));
+        bannerSlidesContainer.addEventListener('mouseleave', startBannerInterval);
+      }
   }
-
-  // Pausar al pasar el ratón por encima (opcional)
-  slidesContainer.addEventListener('mouseenter', () => clearInterval(bannerInterval));
-  slidesContainer.addEventListener('mouseleave', startBannerInterval);
 }
 
-// --- Actualizar Slider ---
-function updateAnimeSlide(animes) {
-  if (!animeSlideContainer) return;
-  animeSlideContainer.innerHTML = '';
-  if (!animes || animes.length === 0) {
-      animeSlideContainer.innerHTML = '<p>No hay animes para mostrar en el slider.</p>';
-      return;
-  }
-  animes.forEach(anime => {
-    if (!anime?.mal_id || !anime.title || !anime.images?.jpg?.image_url) {
-      console.warn('Datos Jikan incompletos para slider:', anime);
-      return;
-    }
-    const emotions = assignEmotions(anime.genres);
-    const emotion1 = emotions[0] || 'epic';
-    const emotion2 = emotions[1] || null;
-    const animeHTML = `
-      <div class="anime-cell" data-id="${anime.mal_id}">
-        <div class="anime-img"><img src="${anime.images.jpg.image_url}" alt="${anime.title}" class="anime-photo" loading="lazy"></div>
-        <div class="anime-content">
-          <div class="anime-title">${anime.title}</div>
-          <div class="anime-studio">by ${anime.studios?.[0]?.name || 'Studio desconocido'}</div>
-          <div class="rate">
-            <span class="emotion-tag ${getEmotionColor(emotion1)}">${getEmotionName(emotion1)}</span>
-            ${emotion2 ? `<span class="emotion-tag ${getEmotionColor(emotion2)}">${getEmotionName(emotion2)}</span>` : ''}
-            <span class="anime-voters">${anime.score ? anime.score.toFixed(1) + '/10' : 'N/A'} ${anime.scored_by ? '(' + formatNumber(anime.scored_by) + ' votos)' : ''}</span>
-          </div>
-          <div class="anime-sum">${anime.synopsis ? truncateText(anime.synopsis, 150) : 'Sin descripción.'}</div>
-          <div class="anime-see">Ver Detalles</div>
-        </div>
-      </div>`;
-    animeSlideContainer.innerHTML += animeHTML;
-  });
-  animeSlideContainer.querySelectorAll('.anime-cell').forEach(cell => {
-    cell.addEventListener('click', function() { handleShowDetails(this.dataset.id); });
-  });
-}
-
-// --- Cargar Populares Iniciales (Usa Jikan - getPopularAnime) ---
+// --- Cargar Populares Iniciales ---
 async function loadPopularAnime() {
-  // Carga en el contenedor principal de tarjetas populares/filtradas
   if (!animeCardsContainer) return;
+  if (cardsLoading) showLoading(cardsLoading, "Cargando populares...");
   try {
-    const popularData = await getPopularAnime(20); // Pide 20 populares
+    const popularData = await getPopularAnime(20);
     if (popularData?.data) {
-      displayAnimeCards(popularData.data, animeCardsContainer); // Especifica el contenedor
+      displayAnimeCards(popularData.data, animeCardsContainer);
     } else {
       animeCardsContainer.innerHTML = '<div class="no-results">No se encontraron animes populares.</div>';
     }
@@ -306,25 +280,17 @@ async function loadPopularAnime() {
     console.error('Error cargando anime popular (Jikan):', error);
     animeCardsContainer.innerHTML = '<div class="no-results">Error al cargar populares.</div>';
   } finally {
-      hideLoading(cardsLoading); // Se oculta en initApp
+     if (cardsLoading) hideLoading(cardsLoading);
   }
 }
 
-// --- NUEVA FUNCIÓN: Cargar Últimos Lanzamientos ---
-// En main.js - DENTRO de la función loadLatestReleases
-
+// --- Cargar Últimos Lanzamientos ---
 async function loadLatestReleases() {
   if (!latestReleasesContainer || !latestReleasesLoading) return;
-
   showLoading(latestReleasesLoading, "Cargando últimos lanzamientos...");
   try {
-      // --- CAMBIO AQUÍ ---
-      // Llamamos a getSeasonalAnime en lugar de getLatestSeasonalAnime
-      // Pedimos un número razonable de items para el scroll horizontal, ej: 15
-      const responseData = await getSeasonalAnime(undefined, undefined, 15); // Usa getSeasonalAnime con límite 15
-
+      const responseData = await getSeasonalAnime(undefined, undefined, 15); // Usamos getSeasonalAnime aquí
       if (responseData?.data && responseData.data.length > 0) {
-          // Pasamos directamente responseData.data que es la lista
           displayAnimeCards(responseData.data, latestReleasesContainer);
       } else {
           latestReleasesContainer.innerHTML = '<div class="no-results">No se encontraron lanzamientos recientes.</div>';
@@ -340,16 +306,15 @@ async function loadLatestReleases() {
   }
 }
 
-
-// --- Mostrar Tarjetas (MODIFICADA para aceptar contenedor) ---
-function displayAnimeCards(animes, container = animeCardsContainer) { // Añadido parámetro container
+// --- Mostrar Tarjetas (Normales) ---
+function displayAnimeCards(animes, container = animeCardsContainer) {
   if (!container) {
       console.error("Contenedor para mostrar tarjetas no válido");
       return;
   }
-  container.innerHTML = ''; // Limpia el contenedor específico
+  container.innerHTML = '';
    if (!animes || animes.length === 0) {
-      // No poner mensaje aquí, la función que llama decide
+      container.innerHTML = '<div class="no-results">No hay animes para mostrar.</div>';
       return;
   }
   animes.forEach(anime => {
@@ -357,32 +322,31 @@ function displayAnimeCards(animes, container = animeCardsContainer) { // Añadid
       console.warn('Datos insuficientes para mostrar tarjeta:', anime);
       return;
     }
-    // Determina las emociones (Jikan vs Backend)
     const emotionTags = anime.Emotions && Array.isArray(anime.Emotions) && anime.Emotions.length > 0
-                        ? anime.Emotions // Si viene del backend
-                        : (anime.genres ? assignEmotions(anime.genres) : ['epic', 'wonder']); // Si viene de Jikan
+                        ? anime.Emotions
+                        : (anime.genres ? assignEmotions(anime.genres) : ['epic', 'wonder']);
     const emotion1 = emotionTags[0] || 'epic';
     const emotion2 = emotionTags[1] || null;
-
     const imageUrl = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || '';
     const synopsisText = anime.synopsis || 'Sin descripción.';
     const scoreValue = typeof anime.score === 'number' ? anime.score : parseFloat(anime.score);
     const scoreText = !isNaN(scoreValue) ? scoreValue.toFixed(1) + '/10' : 'N/A';
     const votersText = anime.scored_by ? '(' + formatNumber(anime.scored_by) + ' votos)' : '';
-    // Adaptar nombre de estudio (Jikan usa 'studios', tu backend 'studio' quizás?)
     const studioText = Array.isArray(anime.studios) && anime.studios.length > 0
                        ? anime.studios[0]?.name
-                       : (anime.studio || 'Studio desconocido'); // Fallback
+                       : (anime.studio || 'Studio desconocido');
 
     const animeCardHTML = `
       <div class="anime-card" data-id="${anime.mal_id}">
         <div class="content-wrapper">
-          ${imageUrl ? `<img src="${imageUrl}" alt="${anime.title}" class="anime-card-img" loading="lazy">` : '<div class="anime-card-img" style="background:#eee; height:200px; display:flex; align-items:center; justify-content:center; color:#aaa;">Sin Imagen</div>'}
+          ${imageUrl ? `<img src="${imageUrl}" alt="${anime.title}" class="anime-card-img" loading="lazy">` : '<div class="anime-card-img placeholder">Sin Imagen</div>'}
           <div class="card-content">
             <div class="anime-name">${anime.title}</div>
             <div class="anime-by">by ${studioText}</div>
-            <span class="emotion-tag ${getEmotionColor(emotion1)}">${getEmotionName(emotion1)}</span>
-            ${emotion2 ? `<span class="emotion-tag ${getEmotionColor(emotion2)}">${getEmotionName(emotion2)}</span>` : ''}
+            <div class="emotion-tags-container">
+              <span class="emotion-tag ${getEmotionColor(emotion1)}">${getEmotionName(emotion1)}</span>
+              ${emotion2 ? `<span class="emotion-tag ${getEmotionColor(emotion2)}">${getEmotionName(emotion2)}</span>` : ''}
+            </div>
             <div class="anime-sum">${truncateText(synopsisText, 100)}</div>
           </div>
         </div>
@@ -390,9 +354,9 @@ function displayAnimeCards(animes, container = animeCardsContainer) { // Añadid
           <div class="like-name"><span>${scoreText}</span> ${votersText}</div>
         </div>
       </div>`;
-    container.innerHTML += animeCardHTML; // Añade al contenedor específico
+    container.innerHTML += animeCardHTML;
   });
-  // Añadir listeners al contenedor específico
+
   container.querySelectorAll('.anime-card').forEach(card => {
     card.addEventListener('click', function() { handleShowDetails(this.dataset.id); });
   });
@@ -400,7 +364,6 @@ function displayAnimeCards(animes, container = animeCardsContainer) { // Añadid
 
 // --- Mostrar Controles de Paginación ---
 function displayPaginationControls(paginationInfo, context) {
-    // ... (Sin cambios en esta función) ...
     if (!paginationControlsContainer) return;
     paginationControlsContainer.innerHTML = '';
 
@@ -415,13 +378,12 @@ function displayPaginationControls(paginationInfo, context) {
         totalPages = paginationInfo.total_pages;
         hasNextPage = currentPage < totalPages;
     } else {
-        if (!paginationInfo || (!paginationInfo.pagination?.last_visible_page && !paginationInfo.total_pages) || Math.max(paginationInfo.pagination?.last_visible_page || 0, paginationInfo.total_pages || 0) <= 1) {
-             return;
-        }
-        console.warn("Estructura de paginación inesperada:", paginationInfo, "Contexto:", context);
-        currentPage = paginationInfo.current_page || paginationInfo.pagination?.current_page || 1;
-        totalPages = paginationInfo.total_pages || paginationInfo.pagination?.last_visible_page || 1;
-        hasNextPage = paginationInfo.pagination?.has_next_page || (currentPage < totalPages);
+        // Intentar manejar paginación inesperada o ausente
+        currentPage = paginationInfo?.current_page || paginationInfo?.pagination?.current_page || 1;
+        totalPages = paginationInfo?.total_pages || paginationInfo?.pagination?.last_visible_page || 1;
+        hasNextPage = paginationInfo?.pagination?.has_next_page ?? (currentPage < totalPages);
+         if (totalPages <= 1) return; // No mostrar si solo hay 1 página
+        console.warn("Estructura de paginación no estándar:", paginationInfo, "Contexto:", context);
     }
 
     if (totalPages <= 1) return;
@@ -467,62 +429,42 @@ function handleShowDetails(animeId) {
 
 // --- Lógica Autocompletado ---
 function showSuggestions(animes) {
-  // ... (Sin cambios en esta función) ...
-   if (!suggestionsContainer) return;
+  if (!suggestionsContainer) return;
   suggestionsContainer.innerHTML = '';
-
-  if (!animes || animes.length === 0) {
-    hideSuggestions();
-    return;
-  }
+  if (!animes || animes.length === 0) { hideSuggestions(); return; }
 
   animes.forEach(anime => {
     if (!anime?.mal_id || !anime.title) return;
     const item = document.createElement('div');
     item.classList.add('suggestion-item');
     item.dataset.id = anime.mal_id;
-
     const imgUrl = anime.images?.jpg?.image_url || '';
     const title = anime.title;
-
     item.innerHTML = `
-      ${imgUrl ? `<img src="${imgUrl}" alt="" loading="lazy">` : '<div style="width:40px; height:55px; background:#eee; margin-right:10px; border-radius:4px;"></div>'}
+      ${imgUrl ? `<img src="${imgUrl}" alt="" loading="lazy">` : '<div class="suggestion-placeholder-img"></div>'}
       <span>${title}</span>
     `;
-
     item.addEventListener('click', () => {
-      searchBar.value = title;
+      if(searchBar) searchBar.value = title;
       hideSuggestions();
-      handleShowDetails(anime.mal_id); // Ir a detalles al hacer clic
+      handleShowDetails(anime.mal_id);
     });
-
     suggestionsContainer.appendChild(item);
   });
-
   suggestionsContainer.style.display = 'block';
 }
 
 function hideSuggestions() {
-  // ... (Sin cambios en esta función) ...
-  if (suggestionsContainer) {
-    suggestionsContainer.style.display = 'none';
-  }
+  if (suggestionsContainer) suggestionsContainer.style.display = 'none';
 }
 
 async function handleAutocompleteSearch(query) {
-  // ... (Sin cambios en esta función) ...
-   if (query.length < 3) {
-    hideSuggestions();
-    return;
-  }
+   if (query.length < 3) { hideSuggestions(); return; }
   console.log(`Buscando sugerencias para: ${query}`);
   try {
     const results = await searchAnime(query, 5); // Jikan, límite 5
-    if (results?.data) {
-      showSuggestions(results.data);
-    } else {
-      hideSuggestions();
-    }
+    if (results?.data) { showSuggestions(results.data); }
+    else { hideSuggestions(); }
   } catch (error) {
     console.error('Error buscando sugerencias:', error);
     hideSuggestions();
@@ -533,33 +475,23 @@ const debouncedAutocompleteSearch = debounce(handleAutocompleteSearch, 400);
 
 // --- Setup Event Listeners ---
 function setupEventListeners() {
-  // Búsqueda: Enter
+  // Búsqueda
   if (searchBar) {
       searchBar.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim()) {
           const query = this.value.trim();
           hideSuggestions();
-          console.log(`Redirigiendo a página de búsqueda para: ${query}`);
           window.location.href = `search.html?q=${encodeURIComponent(query)}`;
         }
       });
-
-      // Búsqueda: Input (Autocompletado)
       searchBar.addEventListener('input', function() {
         const query = this.value.trim();
-        if (query.length === 0) {
-          hideSuggestions();
-        } else if (query.length >= 3) {
-          debouncedAutocompleteSearch(query);
-        } else {
-          hideSuggestions();
-        }
+        if (query.length >= 3) { debouncedAutocompleteSearch(query); }
+        else { hideSuggestions(); }
       });
   }
-
-  // Ocultar sugerencias al hacer clic fuera
+  // Clic fuera de sugerencias
   document.addEventListener('click', function(event) {
-      // Asegurarse que searchBar y suggestionsContainer existen antes de usarlos
       if (searchBar && !searchBar.contains(event.target) &&
           suggestionsContainer && !suggestionsContainer.contains(event.target)) {
           hideSuggestions();
@@ -587,7 +519,6 @@ function setupEventListeners() {
         if (selectedEmotionTags.length > 0) {
           hideSuggestions();
           clearPaginationState();
-          // Por ahora, solo filtra por la primera emoción seleccionada
           handleEmotionFilter([selectedEmotionTags[0]], 1);
         } else {
           showErrorMessage('Selecciona al menos una emoción para filtrar.');
@@ -595,15 +526,23 @@ function setupEventListeners() {
       });
   }
 
-
   // Selección Emoción
   emotionCategories.forEach(emotion => {
     emotion.addEventListener('click', function() {
-        // Deseleccionar otras emociones si solo quieres permitir una selección
-        // document.querySelectorAll('.emotion.selected').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.emotion.selected').forEach(el => {
+            if (el !== this) el.classList.remove('selected');
+        });
         this.classList.toggle('selected');
     });
   });
+
+  // Listener para scroll del Header
+  if (headerElement) {
+      window.addEventListener('scroll', () => {
+          if (window.scrollY > 50) { headerElement.classList.add('header-scrolled'); }
+          else { headerElement.classList.remove('header-scrolled'); }
+      });
+  } else { console.error("Elemento del header no encontrado."); }
 }
 
 // --- Limpiar estado de paginación ---
@@ -620,94 +559,72 @@ function clearPaginationState() {
     hideSuggestions();
 }
 
-// --- Búsqueda Completa (Ahora manejada por search.html) ---
-// async function handleSearch(query) { ... } // Esta función ya no se usa aquí
-
 // --- Filtro Género (CON PAGINACIÓN) ---
-// En main.js - Reemplaza la función handleGenreFilter completa
-
 async function handleGenreFilter(genreName, page = 1) {
   currentFilterType = 'genre';
   currentGenrePage = page;
   currentGenreName = genreName;
-
   if (!animeCardsContainer || !cardsLoading) return;
 
   showLoading(cardsLoading, `Cargando ${genreName} (Pág. ${page})...`);
-  animeCardsContainer.innerHTML = ''; // Limpia contenedor de populares/género
+  animeCardsContainer.innerHTML = '';
   if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
 
-  // Mapeo de géneros
   const genreMap = { 'Todos': 0, 'Acción': 1, 'Drama': 8, 'Romance': 22, 'Comedia': 4, 'Fantasía': 10 };
   const genreId = genreMap[genreName];
   currentGenreId = genreId;
 
   try {
       let responseData;
-
       if (genreName === 'Todos') {
-          // Llama a una función de api.js para populares (o crea una específica si prefieres paginación distinta)
-          // Usaremos getPopularAnime aquí por simplicidad, aunque no soporte paginación directa en la llamada actual
-          // Para paginación de "Todos", necesitarías una función en api.js que llame a /top/anime con page/limit
-          console.log(`Fetching from Jikan (All Genres - Popular - Page ${page})`);
-          // !! CORRECCIÓN: getPopularAnime no toma page. Necesitamos llamar a searchAnime sin query o adaptar/crear una función en api.js
-          // Solución temporal: Usar searchAnime sin query para obtener populares paginados
-           responseData = await searchAnime('', 20, page, { order_by: 'popularity', sort: 'asc' }); // Busca "todos" ordenados por popularidad
-
+           responseData = await searchAnime('', 20, page, { order_by: 'popularity', sort: 'asc' }); // Usa searchAnime para 'Todos'
       } else if (genreId !== undefined) {
-          // Llama a la función existente en api.js para géneros específicos
-          console.log(`Fetching from Jikan (Genre ${genreId} - Page ${page})`);
           responseData = await getAnimeByGenre(genreId, 20, page);
       } else {
+          // Género no mapeado, volver a populares
           console.warn(`Género "${genreName}" no mapeado.`);
           showErrorMessage(`Género "${genreName}" no reconocido.`);
-          // Fallback: Cargar populares sin paginación y resetear
-          responseData = await getPopularAnime(20); // Carga populares iniciales
-          clearPaginationState();
+          responseData = await getPopularAnime(20); // Carga populares sin paginar
+          clearPaginationState(); // Limpia estado porque no hay paginación para esto
           document.querySelector('.anime-type.active')?.classList.remove('active');
-          document.querySelector('.anime-type:first-child')?.classList.add('active'); // Activa "Todos"
+          document.querySelector('.anime-type:first-child')?.classList.add('active');
+           // Como getPopularAnime no devuelve paginación, procesamos solo los datos
+           if (responseData?.data) {
+              displayAnimeCards(responseData.data, animeCardsContainer);
+           } else {
+              animeCardsContainer.innerHTML = '<div class="no-results">No se encontraron animes populares.</div>';
+           }
+           hideLoading(cardsLoading);
+           return; // Salir aquí porque no hay paginación que procesar
       }
 
-      // El resto del procesamiento de responseData es igual...
-      if (responseData && responseData.data && responseData.pagination) {
+      // Procesar respuesta con paginación esperada
+      if (responseData?.data && responseData?.pagination) {
           const animeList = responseData.data;
-          // Asegurarse que Jikan devolvió last_visible_page
           totalGenrePages = responseData.pagination.last_visible_page || 1;
           if (animeList.length > 0) {
-              displayAnimeCards(animeList, animeCardsContainer); // Especifica contenedor
-              displayPaginationControls(responseData, 'genre'); // Usa la paginación de Jikan
+              displayAnimeCards(animeList, animeCardsContainer);
+              displayPaginationControls(responseData, 'genre');
           } else {
-              if (page === 1) {
-                  animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para ${genreName}.</div>`;
-              } else {
-                  animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}) para ${genreName}.</div>`;
-                  displayPaginationControls(responseData, 'genre');
-              }
+              if (page === 1) { animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para ${genreName}.</div>`; }
+              else { animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}) para ${genreName}.</div>`; displayPaginationControls(responseData, 'genre'); }
           }
-      } else if (responseData && responseData.data && !responseData.pagination && page === 1) {
-          displayAnimeCards(responseData.data, animeCardsContainer);
-          console.warn("Respuesta Jikan sin información de paginación.");
-          if (paginationControlsContainer) paginationControlsContainer.innerHTML = ''; // Limpia paginación si no hay
       } else {
-           // Si responseData o responseData.data no existen, o falta paginación y no es la página 1
-          if(page === 1) {
-              animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron resultados para ${genreName}.</div>`;
+          // Caso raro: hay datos pero no paginación (ej. Jikan devuelve menos de 'limit' en la última página)
+          if(responseData?.data && responseData.data.length > 0) {
+              displayAnimeCards(responseData.data, animeCardsContainer);
+              console.warn(`Respuesta para ${genreName} (Pág. ${page}) sin info de paginación completa, pero con datos.`);
           } else {
-               animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}) para ${genreName}.</div>`;
-              // Intenta mostrar controles igual por si es un error parcial
-              if (responseData?.pagination) displayPaginationControls(responseData, 'genre');
+              // No hay datos o estructura inesperada
+              if(page === 1) { animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron resultados para ${genreName}.</div>`; }
+              else { animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}) para ${genreName}.</div>`; }
+              console.warn(`Respuesta Jikan incompleta o vacía para ${genreName} (Pág. ${page}):`, responseData);
           }
-         // throw new Error(`La respuesta de Jikan para ${genreName} (Pág. ${page}) no tiene el formato esperado.`);
-         console.warn(`Respuesta Jikan incompleta para ${genreName} (Pág. ${page}):`, responseData);
+          if (paginationControlsContainer) paginationControlsContainer.innerHTML = ''; // Limpia controles si no hay paginación clara
       }
   } catch (error) {
       console.error(`Error filtrando por género ${genreName} (Pág. ${page}):`, error);
-      // Comprueba si el error es el ReferenceError específico
-      if (error instanceof ReferenceError && error.message.includes("JIKAN_BASE_URL")) {
-           showErrorMessage(`Error interno al construir la solicitud para ${genreName}.`);
-      } else {
-          showErrorMessage(`Error al filtrar por ${genreName}: ${error.message}`);
-      }
+      showErrorMessage(`Error al filtrar por ${genreName}: ${error.message}`);
       animeCardsContainer.innerHTML = `<div class="no-results">Error al filtrar por género. <br><small>${error.message}</small></div>`;
       clearPaginationState();
   } finally {
@@ -715,58 +632,42 @@ async function handleGenreFilter(genreName, page = 1) {
   }
 }
 
+
 // --- Filtro Emoción (CON PAGINACIÓN - usa Backend Local) ---
 async function handleEmotionFilter(selectedTags, page = 1) {
-    // ... (Sin cambios significativos, pero usa el contenedor correcto) ...
     currentFilterType = 'emotion';
-    const emotionTag = selectedTags[0]; // Tomamos solo la primera por ahora
+    const emotionTag = selectedTags[0];
     currentEmotionTag = emotionTag;
     currentEmotionPage = page;
-
     if (!animeCardsContainer || !cardsLoading) return;
 
     showLoading(cardsLoading, `Buscando animes (Pág. ${page}) con emoción: ${getEmotionName(emotionTag)}...`);
-    animeCardsContainer.innerHTML = ''; // Limpia contenedor de populares/emoción
+    animeCardsContainer.innerHTML = '';
     if (paginationControlsContainer) paginationControlsContainer.innerHTML = '';
-    console.log(`Usando API local para buscar emoción: ${emotionTag}, Página: ${page}`);
 
     try {
-        // Llama al backend local
         const responseData = await getRecommendationsByEmotion(emotionTag, page, 20);
-
         if (responseData && responseData.recommendations && responseData.pagination) {
             const recommendations = responseData.recommendations;
             const paginationInfo = responseData.pagination;
             totalEmotionPages = paginationInfo.total_pages;
-
             if (recommendations.length > 0) {
-                 // Mapear datos del backend al formato esperado por displayAnimeCards
-                 const mappedRecommendations = recommendations.map(anime_backend => {
-                    return {
-                        mal_id: anime_backend.mal_id,
-                        title: anime_backend.title,
+                 const mappedRecommendations = recommendations.map(anime_backend => ({
+                        mal_id: anime_backend.mal_id, title: anime_backend.title,
                         images: { jpg: { image_url: anime_backend.thumbnailURL || anime_backend.Image_URL || '', large_image_url: anime_backend.Image_URL || anime_backend.thumbnailURL || ''}},
-                        studios: anime_backend.studio ? [{ name: anime_backend.studio }] : [], // Simula estructura Jikan
-                        genres: anime_backend.genre ? anime_backend.genre.split(',').map(g=>({name: g.trim()})) : [], // Simula estructura Jikan
-                        score: anime_backend.rating,
-                        scored_by: null, // No tenemos esta info del backend local
+                        studios: anime_backend.studio ? [{ name: anime_backend.studio }] : [],
+                        genres: anime_backend.genre ? anime_backend.genre.split(',').map(g=>({name: g.trim()})) : [],
+                        score: anime_backend.rating, scored_by: null,
                         synopsis: anime_backend.Synopsis || 'Descripción no disponible.',
-                        Emotions: anime_backend.Emotions ? anime_backend.Emotions.split(',') : [] // Pasa las emociones asignadas por el backend
-                    };
-                });
-                displayAnimeCards(mappedRecommendations, animeCardsContainer); // Especifica contenedor
+                        Emotions: anime_backend.Emotions ? anime_backend.Emotions.split(',') : []
+                    }));
+                displayAnimeCards(mappedRecommendations, animeCardsContainer);
                 displayPaginationControls(paginationInfo, 'emotion');
             } else {
-                 if (page === 1) {
-                    animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para la emoción: ${getEmotionName(emotionTag)}.</div>`;
-                 } else {
-                     animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}).</div>`;
-                     displayPaginationControls(paginationInfo, 'emotion');
-                 }
+                 if (page === 1) { animeCardsContainer.innerHTML = `<div class="no-results">No se encontraron animes para la emoción: ${getEmotionName(emotionTag)}.</div>`; }
+                 else { animeCardsContainer.innerHTML = `<div class="no-results">No hay más resultados (Pág. ${page}).</div>`; displayPaginationControls(paginationInfo, 'emotion'); }
             }
-        } else {
-             throw new Error("La respuesta del backend no tiene el formato esperado.");
-        }
+        } else { throw new Error("La respuesta del backend no tiene el formato esperado."); }
     } catch (error) {
         console.error(`Error al obtener/procesar recomendaciones del backend (Pág. ${page}):`, error);
         showErrorMessage(`Error al buscar por emoción: ${error.message}`);
@@ -779,40 +680,32 @@ async function handleEmotionFilter(selectedTags, page = 1) {
 
 // --- Funciones Auxiliares ---
 function showErrorMessage(message) {
-  // ... (Sin cambios) ...
    const existingError = document.querySelector('.error-message');
   if (existingError) { existingError.remove(); }
   const errorDiv = document.createElement('div');
   errorDiv.className = 'error-message';
   errorDiv.textContent = message;
   document.body.insertAdjacentElement('beforeend', errorDiv);
-  // Force reflow to enable transition
-  errorDiv.offsetHeight;
+  errorDiv.offsetHeight; // Force reflow
   errorDiv.classList.add('show');
-  // Remove after animation
   setTimeout(() => {
       errorDiv.classList.remove('show');
-      // Remove from DOM after transition ends
       errorDiv.addEventListener('transitionend', () => errorDiv.remove(), { once: true });
-  }, 3500); // Match timeout with CSS transition duration + delay
+  }, 3500);
 }
 
 function truncateText(text, maxLength) {
-  // ... (Sin cambios) ...
   if (!text) return '';
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 }
 
 function formatNumber(num) {
-  // ... (Sin cambios) ...
   const number = Number(num);
-  if (isNaN(number)) { return '0'; } // O devolver '' o 'N/A'
-  // Formato chileno
+  if (isNaN(number)) { return '0'; }
   return new Intl.NumberFormat('es-CL').format(number);
 }
 
 function capitalize(str) {
-  // ... (Sin cambios) ...
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
