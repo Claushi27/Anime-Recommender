@@ -1,0 +1,288 @@
+/* CSS/detalle-v2.css - Estilos REVISADOS para la página de detalles */
+
+/* === Contenedor Principal y Carga/Error === */
+.detail-page-container {
+    padding: 20px 25px;
+    background-color: var(--app-bg);
+}
+.detail-loading, .detail-error {
+  text-align: center; padding: 60px 20px; font-size: 1.3em; min-height: 300px; /* Reducir altura mínima */
+}
+.detail-loading { color: var(--primary-color); }
+.detail-error { color: var(--secondary-color); }
+.anime-detail-content {
+    display: none; /* Oculto hasta que JS lo muestre */
+    opacity: 0; /* Para animación fade-in */
+}
+
+/* === Sección Superior: Layout Horizontal === */
+.detail-top-section {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+    padding: 20px; /* Reducir padding */
+    background-color: var(--white);
+    border-radius: var(--border-radius-large);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.07);
+}
+
+/* Columna Izquierda (Poster, Acciones, Info Adicional) */
+.top-left {
+    flex: 0 0 250px; /* Ancho fijo reducido */
+    display: flex;
+    flex-direction: column;
+}
+.detail-poster-img {
+    width: 100%;
+    height: auto;
+    /* max-height: 350px; */ /* Quitar max-height para que se ajuste */
+    object-fit: cover;
+    border-radius: var(--border-radius-medium);
+    margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background-color: #eee; /* Placeholder bg */
+}
+.action-buttons { width: 100%; margin-bottom: 20px; }
+.action-buttons button {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 10px 15px; margin-bottom: 10px; border: none;
+    border-radius: var(--border-radius-small); font-size: 0.9em; font-weight: 600; /* Reducir fuente */
+    cursor: pointer; transition: all var(--transition-fast);
+}
+#add-list-button { background-color: var(--primary-color); color: var(--white); }
+#add-list-button:hover:not(:disabled) { background-color: #5b54d4; }
+#add-fav-button { background-color: var(--secondary-light); color: var(--secondary-color); }
+#add-fav-button:hover:not(:disabled) { background-color: #ffe0e4; }
+.action-buttons button i { font-size: 1em; } /* Icono un poco más pequeño */
+.action-buttons button:disabled { background-color: #e0e0e0; color: #999; cursor: not-allowed; }
+
+/* Info Adicional y Títulos Alternativos en Col Izquierda */
+.side-section { /* Aplicado a #additional-info-section */
+    font-size: 0.85em; color: var(--text-color); border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px;
+}
+.side-section h3 { font-size: 1.1em; font-weight: 600; margin-bottom: 10px; color: var(--dark-text); }
+.side-section h4 { font-size: 1em; font-weight: 600; margin-top: 15px; margin-bottom: 8px; color: var(--dark-text); }
+.side-section ul { list-style: none; padding: 0; margin: 0; }
+.side-section li { margin-bottom: 6px; line-height: 1.5; }
+.side-section li strong { color: var(--dark-text); font-weight: 500; min-width: 80px; display: inline-block; } /* Ajustar ancho mínimo */
+#anime-alt-titles li { color: var(--light-text); }
+#anime-alt-titles li strong { color: var(--text-color); }
+
+
+/* Columna Derecha (Título, Stats, Info Rápida, Tags, Sinopsis, Interacción) */
+.top-right { flex: 1; min-width: 0; display: flex; flex-direction: column;}
+
+#anime-title-main { font-size: 2.2em; font-weight: 700; color: var(--dark-text); margin-bottom: 3px; line-height: 1.2; }
+.japanese-title { font-size: 1.05em; color: var(--light-text); font-weight: normal; margin-bottom: 18px; font-style: italic;}
+
+/* Stats Mejorados */
+.stats-block { display: flex; flex-wrap: wrap; gap: 15px 25px; margin-bottom: 18px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.stat-item { display: flex; flex-direction: column; min-width: 100px; }
+.stat-label { font-size: 0.75em; font-weight: 600; color: var(--light-text); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.stat-value-container { display: flex; align-items: center; gap: 5px; } /* Para icono y valor */
+.stat-value { font-size: 1.4em; font-weight: 700; line-height: 1; color: var(--dark-text); }
+.stat-item.score .stat-value { color: var(--primary-color); font-size: 1.6em; }
+.score-icon { color: var(--primary-color); font-size: 1.1em; }
+.stat-sub { font-size: 0.8em; color: var(--light-text); margin-top: 2px; }
+.rank-value, .pop-value, .mem-value { font-size: 1.2em; } /* Ajustar tamaño otros stats */
+
+/* Info Rápida con iconos */
+.quick-info { font-size: 0.9em; color: var(--text-color); margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px 15px; }
+.quick-info span { display: inline-flex; align-items: center; gap: 5px; }
+.quick-info i { color: var(--light-text); font-size: 0.9em; }
+
+/* Tags */
+.tags-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+.tag-group { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Estilos de .tag, .genre-tag, .emotion-tag vienen de style.css / styles-additional.css */
+.tag.placeholder-tag { background-color: #eee; color: #999; }
+
+
+/* Separador */
+hr.detail-separator { border: none; height: 1px; background-color: var(--border-color); margin: 15px 0 20px 0; }
+
+/* Sinopsis y Sección Interacción */
+#synopsis-section { margin-bottom: 20px; }
+#synopsis-section h3 { font-size: 1.3em; margin-bottom: 10px; color: var(--dark-text);}
+#anime-synopsis { line-height: 1.65; color: var(--text-color); }
+
+.placeholder-section { background-color: #f9f9fb; border: 1px dashed var(--border-color); padding: 15px; border-radius: var(--border-radius-medium); text-align: center; margin-top: 20px; }
+.placeholder-section h3 { font-size: 1.1em; color: var(--light-text); margin-bottom: 10px; border-bottom: none; padding-bottom: 0;}
+.interaction-content { display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
+.rating-placeholder span { margin-right: 8px; font-weight: 500; }
+.stars button { background: none; border: none; font-size: 1.5em; color: #ccc; cursor: not-allowed; padding: 0 2px;}
+.action-button-disabled { padding: 8px 12px; font-size: 0.9em; background-color: #ccc; color: #666; border: none; border-radius: var(--border-radius-small); cursor: not-allowed; }
+
+
+/* === Secciones Inferiores (Tráiler, Sliders) === */
+.detail-bottom-content {
+    margin-top: 30px;
+}
+.detail-section { /* Estilo común para secciones inferiores */
+    background-color: var(--white);
+    padding: 20px;
+    border-radius: var(--border-radius-medium);
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+.detail-section h3 {
+    font-size: 1.4em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--dark-text);
+}
+
+/* Tráiler */
+.trailer-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background-color: #eee; }
+.trailer-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+.trailer-container p { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--light-text); }
+
+/* === Estilos para Sliders Horizontales === */
+.horizontal-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden; /* Ocultar scroll vertical si aparece */
+    gap: 15px;
+    padding: 10px 5px 20px 5px; /* Espacio para scrollbar y tarjetas */
+    /* Estilos para 'snap scrolling' (opcional) */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll en iOS */
+    /* Scrollbar bonita (Webkit) */
+    &::-webkit-scrollbar { height: 8px; }
+    &::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 4px; }
+    &::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+}
+/* Placeholder dentro de sliders */
+.horizontal-scroll-container .loading-placeholder,
+.horizontal-scroll-container .error-placeholder {
+    width: 100%;
+    text-align: center;
+    color: var(--light-text);
+    padding: 20px;
+    font-style: italic;
+}
+.horizontal-scroll-container .error-placeholder { color: var(--secondary-color); }
+
+/* Ítem común dentro del slider */
+.scroll-item {
+    scroll-snap-align: start; /* Alinear inicio de tarjeta con el viewport */
+    flex-shrink: 0; /* Evitar que las tarjetas se achiquen */
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.scroll-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+/* Tarjeta Personaje en Slider */
+.character-card.scroll-item {
+    display: flex;
+    width: 320px; /* Ancho fijo para la tarjeta de personaje */
+    background-color: #fdfdff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    padding: 8px;
+    align-items: center;
+    gap: 10px;
+}
+.card-col { display: flex; flex-direction: column; justify-content: center; }
+.character-img-col img { width: 50px; height: 75px; object-fit: cover; border-radius: 4px; background-color: #eee; }
+.character-info-col { flex: 1; min-width: 0; } /* Para text-overflow */
+.character-name { font-weight: 600; color: var(--dark-text); font-size: 0.9em; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.character-role { font-size: 0.8em; color: var(--light-text); }
+.va-info-col { text-align: right; min-width: 80px; }
+.va-name { font-size: 0.85em; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.va-lang { font-size: 0.75em; color: var(--light-text); }
+.va-img-col img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; background-color: #eee; }
+
+/* Tarjeta Staff en Slider */
+.staff-card.scroll-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #fdfdff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    padding: 10px;
+    width: 280px; /* Ancho fijo tarjeta staff */
+}
+.staff-img img { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; background-color: #eee; }
+.staff-info { flex: 1; min-width: 0; }
+.staff-name { font-weight: 600; color: var(--dark-text); font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.staff-role { font-size: 0.8em; color: var(--light-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+/* Tarjeta Recomendación en Slider */
+/* Reutilizamos .anime-card con modificaciones */
+.recommendation-card.anime-card.scroll-item {
+    width: 160px; /* Ancho más pequeño para recomendaciones */
+    background-color: var(--white);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    padding: 0; /* Quitar padding interno de anime-card */
+    cursor: pointer;
+}
+.recommendation-card .rec-img { /* Imagen ocupa todo el ancho superior */
+    width: 100%;
+    height: 220px; /* Altura fija para imagen de recomendación */
+    object-fit: cover;
+    border-radius: var(--border-radius-small) var(--border-radius-small) 0 0;
+    margin-bottom: 0;
+    display: block;
+    background-color: #eee;
+}
+.recommendation-card .rec-content { /* Contenido debajo de la imagen */
+    padding: 8px 10px;
+    text-align: center;
+}
+.recommendation-card .rec-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--dark-text);
+    line-height: 1.3;
+    margin-bottom: 3px;
+    /* Permitir 2 líneas */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: calc(1.3em * 2);
+}
+.recommendation-card .rec-votes {
+    font-size: 0.75em;
+    color: var(--light-text);
+}
+
+
+/* === Responsive Design === */
+@media (max-width: 900px) { /* Tablet */
+    .detail-top-section { flex-direction: column; align-items: stretch; gap: 20px; }
+    .top-left { flex-basis: auto; width: 100%; max-width: 300px; margin: 0 auto; /* Centrar columna izq */ }
+    .top-right { width: 100%; }
+    #anime-title-main { font-size: 2em; }
+    .stats-block { gap: 15px; justify-content: space-between; } /* Ajustar espacio stats */
+    .stat-value { font-size: 1.3em; }
+     .stat-item.score .stat-value { font-size: 1.5em; }
+}
+
+@media (max-width: 600px) { /* Móvil */
+    .detail-page-container { padding: 10px; }
+    .detail-top-section { padding: 15px; flex-direction: column; }
+    .top-left { max-width: 200px; /* Poster más pequeño */ flex: 0 0 auto;}
+    #anime-title-main { font-size: 1.7em; }
+    .japanese-title { font-size: 1em; }
+    .stats-block { gap: 10px 15px; }
+    .stat-item { min-width: 80px; flex-basis: calc(50% - 10px); } /* 2 stats por línea aprox */
+    .stat-value { font-size: 1.1em; }
+     .stat-item.score .stat-value { font-size: 1.3em; }
+    .quick-info { font-size: 0.8em; gap: 5px 10px;}
+    .tag-group { gap: 5px;}
+    .tag { font-size: 0.75em; padding: 3px 8px;}
+    .detail-section { padding: 15px; }
+    .detail-section h3 { font-size: 1.2em; }
+    /* Ajustar sliders en móvil */
+    .character-card.scroll-item { width: 280px; } /* Reducir ancho tarjeta */
+    .staff-card.scroll-item { width: 240px; }
+    .recommendation-card.anime-card.scroll-item { width: 140px; }
+    .recommendation-card .rec-img { height: 190px; }
+}
