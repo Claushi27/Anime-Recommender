@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="CSS/style.css">
   <link rel="stylesheet" href="CSS/styles-additional.css">
+  <link rel="stylesheet" href="CSS/filters.css">
   <style>
     /* Estilos básicos (copiados de index.html o movidos a CSS) */
     .loading-indicator { display: none; text-align: center; padding: 30px 20px; font-size: 1.1em; color: var(--primary-color); width: 100%; grid-column: 1 / -1; }
@@ -22,6 +23,7 @@
     /* Añadir más estilos según sea necesario */
   </style>
 </head>
+</head>
 <body>
   <div class="anime-store">
     <div class="header">
@@ -32,17 +34,94 @@
            </a>
            </div>
         <div class="header-title">ani<span>Emotion</span></div>
-        <div class="profile">
-            </div>
+        <div class="profile"></div>
     </div>
 
-    <div class="search-results-container main-wrapper">
-        <div class="filters-section" style="/* float: left; width: 25%; padding-right: 20px; */ /* Descomentar y ajustar para layout con filtros */">
-            <h2>Filtros</h2>
-            <p style="color: #666;">(Próximamente)</p>
-            </div>
+    <div class="search-results-container">
 
-        <div class="results-section" style="/* float: left; width: 75%; */ /* Descomentar y ajustar para layout con filtros */">
+        <aside class="filters-section">
+            <h2>Filtros</h2>
+            <form id="filters-form">
+
+                <div class="filter-group">
+                    <label for="filter-type">Tipo</label>
+                    <select id="filter-type" name="type">
+                        <option value="">Todos</option>
+                        <option value="tv">TV</option>
+                        <option value="movie">Película</option>
+                        <option value="ova">OVA</option>
+                        <option value="special">Especial</option>
+                        <option value="ona">ONA</option>
+                        <option value="music">Música</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-status">Estado</label>
+                    <select id="filter-status" name="status">
+                        <option value="">Todos</option>
+                        <option value="airing">En Emisión</option>
+                        <option value="complete">Finalizado</option>
+                        <option value="upcoming">Próximamente</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-rating">Clasificación</label>
+                    <select id="filter-rating" name="rating">
+                        <option value="">Todas</option>
+                        <option value="g">G - All Ages</option>
+                        <option value="pg">PG - Children</option>
+                        <option value="pg13">PG-13 - Teens 13+</option>
+                        <option value="r17">R - 17+ (Violence & profanity)</option>
+                        <option value="r">R+ - Mild Nudity</option>
+                        <option value="rx">Rx - Hentai</option>
+                    </select>
+                </div>
+
+                 <div class="filter-group">
+                    <label for="filter-genre">Género Principal</label>
+                    <select id="filter-genre" name="genre">
+                        <option value="">Todos</option>
+                        <option value="1">Acción</option>
+                        <option value="2">Aventura</option>
+                        <option value="4">Comedia</option>
+                        <option value="8">Drama</option>
+                        <option value="10">Fantasía</option>
+                        <option value="22">Romance</option>
+                        <option value="24">Ciencia Ficción</option>
+                        <option value="30">Deportes</option>
+                        <option value="36">Slice of Life</option>
+                        <option value="37">Sobrenatural</option>
+                        <option value="41">Thriller</option>
+                        </select>
+                 </div>
+
+                 <div class="sort-filter-group filter-group">
+                     <div class="filter-control-group">
+                        <label for="filter-order-by">Ordenar Por</label>
+                        <select id="filter-order-by" name="order_by">
+                            <option value="">Relevancia</option>
+                            <option value="title">Título</option>
+                            <option value="score">Puntuación</option>
+                            <option value="popularity">Popularidad</option>
+                            <option value="rank">Ranking</option>
+                            <option value="start_date">Fecha Inicio</option>
+                        </select>
+                     </div>
+                     <div class="filter-control-group">
+                        <label for="filter-sort">Dirección</label>
+                        <select id="filter-sort" name="sort">
+                            <option value="desc">Descendente</option>
+                            <option value="asc">Ascendente</option>
+                        </select>
+                     </div>
+                 </div>
+
+                <button type="button" id="apply-filters-btn">Aplicar Filtros</button>
+            </form>
+        </aside>
+        <main class="results-section">
             <div class="search-header">
                 <h1>Resultados para: <span id="search-term"></span></h1>
             </div>
@@ -54,10 +133,9 @@
 
             <div id="search-pagination-controls" class="pagination-container">
                 </div>
-        </div>
-         <div style="clear: both;"></div> </div>
-
-  </div> <script type="module" src="search.js"></script>
+        </main>
+         </div> </div>
+  <script type="module" src="search.js"></script>
 
 </body>
 </html>

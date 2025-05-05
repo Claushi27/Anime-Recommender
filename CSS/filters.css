@@ -1,0 +1,103 @@
+  /* --- Estilos Base (sin cambios) --- */
+  .loading-indicator { display: none; text-align: center; padding: 30px 20px; font-size: 1.1em; color: var(--primary-color); width: 100%; grid-column: 1 / -1; }
+  .loading-indicator.show { display: block; }
+  .loading-indicator.show::before { content: ''; display: inline-block; width: 20px; height: 20px; border: 3px solid var(--primary-light); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .search-results-container { padding: 20px; display: flex; gap: 20px; } /* Flex para filtros y resultados */
+  .search-header h1 { margin-bottom: 20px; font-size: 1.8em; color: var(--dark-text); }
+  .search-header span { color: var(--primary-color); font-weight: bold; }
+  /* Reutilizar estilos de tarjetas y paginación */
+  .results-section .anime-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;} /* Grid más ajustado */
+  .pagination-container { text-align: center; margin-top: 25px; margin-bottom: 20px; padding: 10px; }
+
+  /* --- NUEVO: Estilos para Filtros --- */
+  .filters-section {
+      flex: 0 0 280px; /* Ancho fijo para la columna de filtros */
+      padding: 15px;
+      background-color: var(--white);
+      border-radius: var(--border-radius-medium);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      height: fit-content; /* Ajustar altura al contenido */
+      position: sticky; /* Para que se quede fijo al hacer scroll */
+      top: 85px; /* Debajo del header fijo (ajustar si es necesario) */
+  }
+  .filters-section h2 {
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+  }
+  .filter-group {
+      margin-bottom: 20px;
+  }
+  .filter-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9em;
+      margin-bottom: 8px;
+      color: var(--dark-text);
+  }
+  .filter-group select,
+  .filter-group input { /* Estilo genérico para inputs si los hubiera */
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-small);
+      font-size: 0.9em;
+      background-color: #f9f9fb; /* Fondo ligero */
+      color: var(--text-color);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .filter-group select:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 2px var(--primary-light);
+  }
+   /* Estilo específico para grupo de Sort (lado a lado) */
+  .sort-filter-group {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end; /* Alinear elementos abajo */
+  }
+   .sort-filter-group .filter-control-group {
+       flex: 1; /* Ocupar espacio disponible */
+   }
+
+   /* Estilo para el botón de aplicar */
+  #apply-filters-btn {
+      width: 100%;
+      padding: 10px 15px;
+      background-color: var(--primary-color);
+      color: var(--white);
+      border: none;
+      border-radius: var(--border-radius-small);
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+  }
+  #apply-filters-btn:hover {
+      background-color: #5b54d4;
+  }
+
+  /* --- Layout Resultados --- */
+  .results-section {
+      flex: 1; /* Ocupa el espacio restante */
+      min-width: 0; /* Para que flexbox funcione correctamente */
+  }
+
+   /* Responsive para filtros */
+   @media (max-width: 900px) {
+       .search-results-container {
+           flex-direction: column; /* Apilar filtros y resultados */
+       }
+       .filters-section {
+           flex: 0 0 auto; /* Ancho automático */
+           width: 100%;
+           position: static; /* Quitar sticky en móvil */
+           margin-bottom: 20px;
+       }
+       .results-section .anime-cards {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Ajustar tarjetas */
+       }
+   }
