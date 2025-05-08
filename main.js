@@ -14,7 +14,7 @@ import {
   getEmotionColor,
   getRecommendationsByEmotion, // Puede ser necesaria en funciones no incluidas aquí
   getLatestSeasonalAnime,    // Usada por loadLatestReleases (ahora es getSeasonalAnime)
-  getCustomRanking
+  //getCustomRanking
 } from './api.js';
 
 // ==================================================
@@ -740,26 +740,21 @@ async function loadLatestReleases() {
  * Carga el Top 10 de animes desde el backend custom.
  */
 async function loadCustomTopRankedAnime() {
-  if (!topRankedContainer || !topRankedLoading) return;
-  // Loading indicator ya está activo desde initApp
-  try {
-    const minVotesForHomePageTop = 5000; // Umbral de votos
-    const responseData = await getCustomRanking(1, 10, minVotesForHomePageTop); // Llama al backend
+  const topRankedContainer = document.getElementById('top-ranked-cards');
+  const topRankedLoading = document.getElementById('top-ranked-loading');
 
-    if (responseData?.data) { // Verificar si data existe, incluso si está vacía
-        displayAnimeCards(responseData.data, topRankedContainer); // displayAnimeCards maneja el array vacío
-    } else {
-        // Si la respuesta no tiene 'data', es un error inesperado del backend
-        throw new Error("Respuesta inválida del backend para ranking custom (falta 'data').");
-    }
-  } catch (error) {
-    console.error('Error cargando Top Ranked Custom Anime:', error);
-    if (!error.message || !error.message.includes('404')) { // No molestar con 404 si backend está offline
-        showErrorMessage(`Error al cargar el top animes: ${error.message}`);
-    }
-    if (topRankedContainer) topRankedContainer.innerHTML = `<div class="no-results error-placeholder">Error al cargar el top. <small>${error.message}</small></div>`;
+  if (topRankedLoading) {
+      hideLoading(topRankedLoading); // Asegúrate de ocultar el loading si se mostró
   }
-  // hideLoading se maneja en initApp
+
+  if (topRankedContainer) {
+    // Poner un mensaje o dejarlo vacío, pero no llamar a la API.
+    topRankedContainer.innerHTML = '<p style="font-size: 0.9em; color: #777; padding: 10px 5px; text-align: center; width:100%;">Top animes no disponible en este momento.</p>';
+  }
+  
+  console.log("loadCustomTopRankedAnime fue llamada, pero la funcionalidad de ranking está desactivada intencionalmente (no se llama a la API).");
+  // No se hace ninguna llamada a `getCustomRanking` ni se procesan datos.
+  // La función existe, se llama, pero no hace la operación original.
 }
 
 // ==================================================
