@@ -1,328 +1,352 @@
-/* styles-additional.css - Estilos adicionales para AniEmotion */
+/* styles-additional.css - Estilos adicionales y componentes específicos para AniEmotion */
 
-/* Estilos para emociones */
+/* ================== Header Global (Barra de Búsqueda con Lupa) ================== */
+/* Estilos movidos desde style.css para mantenerlos agrupados aquí */
+
+.header .search-bar {
+  position: relative; /* Mantiene posicionamiento para sugerencias */
+  display: flex; /* Usa flex para alinear input y botón */
+  align-items: center;
+  /* max-width y width ya se manejan en style.css o por el layout del header */
+}
+
+.header .search-bar input#global-search-input {
+  flex-grow: 1;
+  height: 36px;
+  border-radius: var(--border-radius-xlarge) 0 0 var(--border-radius-xlarge);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-right: none;
+  padding: 0 15px 0 20px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+  font-size: var(--font-size-normal);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+.header .search-bar input#global-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+.header .search-bar input#global-search-input:focus {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  z-index: 2;
+  position: relative;
+}
+
+.header .search-bar button#global-search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 40px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-left: none;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+  border-radius: 0 var(--border-radius-xlarge) var(--border-radius-xlarge) 0;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.header .search-bar button#global-search-button:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.header .search-bar button#global-search-button svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--white);
+}
+
+/* Ajustes focus */
+.header .search-bar input#global-search-input:focus + button#global-search-button {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- Estilos Header Scrolleado --- */
+.header.header-scrolled .search-bar input#global-search-input {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  color: var(--dark-text);
+  border-right: none;
+}
+.header.header-scrolled .search-bar input#global-search-input::placeholder {
+  color: var(--light-text);
+}
+.header.header-scrolled .search-bar input#global-search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.header.header-scrolled .search-bar button#global-search-button {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  border-left: none;
+  color: var(--text-color);
+}
+.header.header-scrolled .search-bar button#global-search-button svg {
+  stroke: var(--text-color);
+}
+.header.header-scrolled .search-bar button#global-search-button:hover {
+   background-color: #f0f0f5;
+   border-color: var(--primary-color);
+}
+.header.header-scrolled .search-bar input#global-search-input:focus + button#global-search-button {
+   border-color: var(--primary-color);
+}
+
+/* Estilos para el enlace del título */
+.header a.header-title-link {
+  text-decoration: none;
+  color: inherit;
+  /* Layout (copiado de style.css para asegurar consistencia si se quita de allá) */
+  margin: 0 auto;
+  flex-grow: 0;
+  flex-shrink: 0;
+  text-align: center;
+}
+.header a.header-title-link:hover .header-title {
+  opacity: 0.9;
+}
+/* Asegurarse que el título dentro del enlace mantenga sus estilos base */
+.header a.header-title-link .header-title {
+  /* Los estilos de fuente, tamaño, etc., deben venir de .header-title en style.css */
+  /* Solo nos aseguramos del color inicial y la transición si es necesario */
+  color: var(--white); /* Color inicial */
+  transition: color var(--transition-medium);
+}
+.header a.header-title-link .header-title span {
+  color: var(--primary-light); /* Color inicial span */
+  transition: color var(--transition-medium);
+}
+/* Colores para estado scrolleado del link del título */
+.header.header-scrolled a.header-title-link .header-title {
+  color: var(--dark-text);
+}
+.header.header-scrolled a.header-title-link .header-title span {
+  color: var(--primary-color);
+}
+
+/* ================== Emotion Tags ================== */
+/* Estilos para tags de emoción (usados en tarjetas, detalles, etc.) */
 .emotion-tag {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: 500;
-    margin-right: 8px;
-    color: white;
-  }
-  
-  .emotion-tag.epic {
-    background-color: #ff4757;
-  }
-  
-  .emotion-tag.tension {
-    background-color: #5352ed;
-  }
-  
-  .emotion-tag.sad {
-    background-color: #1e90ff;
-  }
-  
-  .emotion-tag.nostalgia {
-    background-color: #70a1ff;
-  }
-  
-  .emotion-tag.happy {
-    background-color: #ff6b81;
-  }
-  
-  .emotion-tag.wonder {
-    background-color: #ffa502;
-  }
-  
-  /* Estilos para botones Ver Detalles por emoción */
-  .anime-see {
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  
-  .anime-see:hover {
-    transform: translateY(-2px);
-  }
-  
-  .anime-see.anime-blue {
-    color: #1e90ff;
-  }
-  
-  .anime-see.anime-pink {
-    color: #ff6b81;
-  }
-  
-  .anime-see.anime-yellow {
-    color: #ffa502;
-  }
-  
-  .anime-see.anime-purple {
-    color: #5352ed;
-  }
-  
-  /* Estilos para selección de emociones */
-  .emotion {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    padding: 5px;
-    border-radius: 8px;
-  }
-  
-  .emotion:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .emotion.selected {
-    background-color: rgba(255, 71, 87, 0.1);
-    box-shadow: 0 0 0 2px #ff4757;
-  }
-  
-  .filter-button {
-    background-color: #ff4757;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    margin-top: 15px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .filter-button:hover {
-    background-color: #ff6b81;
-  }
-  
-  /* Estilos para modal de detalles */
-  .anime-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s;
-  }
-  
-  .modal-content {
-    background-color: white;
-    width: 80%;
-    max-width: 900px;
-    max-height: 90vh;
-    border-radius: 12px;
-    overflow: auto;
-    padding: 20px;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  }
-  
-  .close-modal {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #666;
-    z-index: 10;
-  }
-  
-  .modal-header {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .modal-img {
-    flex: 0 0 200px;
-  }
-  
-  .modal-img img {
-    width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  
-  .modal-info {
-    flex: 1;
-  }
-  
-  .modal-info h2 {
-    margin-top: 0;
-    color: #333;
-    font-size: 24px;
-  }
-  
-  .modal-info h3 {
-    margin-top: 5px;
-    color: #666;
-    font-size: 16px;
-    font-weight: normal;
-  }
-  
-  .modal-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    margin: 15px 0;
-  }
-  
-  .modal-emotions {
-    display: flex;
-    margin: 15px 0;
-  }
-  
-  .modal-genres {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 15px 0;
-  }
-  
-  .genre-tag {
-    background-color: #f1f1f1;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 12px;
-  }
-  
-  .modal-body {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-  }
-  
-  .modal-body h3 {
-    color: #333;
-    margin-top: 20px;
-    margin-bottom: 10px;
-  }
-  
-  .trailer-container {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
-    height: 0;
-    overflow: hidden;
-    margin: 20px 0;
-  }
-  
-  .trailer-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-  }
-  
-  /* Variantes de color para el modal */
-  .modal-content.anime-blue {
-    border-top: 5px solid #1e90ff;
-  }
-  
-  .modal-content.anime-pink {
-    border-top: 5px solid #ff6b81;
-  }
-  
-  .modal-content.anime-yellow {
-    border-top: 5px solid #ffa502;
-  }
-  
-  .modal-content.anime-purple {
-    border-top: 5px solid #5352ed;
-  }
-  
-  /* Mensaje de error */
-  .error-message {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background-color: #ff4757;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    opacity: 0;
-    transition: transform 0.3s, opacity 0.3s;
-  }
-  
-  .error-message.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-  
-  /* Mensaje sin resultados */
-  .no-results {
-    text-align: center;
-    padding: 40px;
-    font-size: 18px;
-    color: #666;
-    grid-column: 1 / -1;
-  }
-  
-  /* Animaciones */
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .modal-header {
-      flex-direction: column;
-    }
-    
-    .modal-img {
-      flex: 0 0 auto;
-      max-width: 150px;
-      margin: 0 auto;
-    }
-    
-    .modal-content {
-      width: 95%;
-      padding: 15px;
-    }
-    
-    .modal-stats {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    /* Estilo básico para el indicador de carga */
-.loading-indicator {
-    display: none; /* Oculto por defecto */
-    text-align: center;
-    padding: 30px 20px; /* Más padding */
-    font-size: 1.1em; /* Tamaño ajustado */
-    color: var(--primary-color);
-    width: 100%; /* Ocupar ancho del contenedor */
-    grid-column: 1 / -1; /* Para que ocupe todo el ancho en el grid de tarjetas */
-  }
-  
-  .loading-indicator.show {
-    display: block; /* Mostrar cuando esté activo */
-  }
-  
-  /* Opcional: Un spinner simple con CSS */
-  .loading-indicator.show::before {
-      content: '';
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid var(--primary-light);
-      border-top-color: var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 10px;
-      vertical-align: middle;
-  }
-  
-  @keyframes spin {
-      to { transform: rotate(360deg); }
-  }
+  padding: 5px 10px; /* Ajustar padding si es necesario */
+  border-radius: 15px;
+  font-size: 11px; /* Ligeramente más pequeño que el default de 12px */
+  font-weight: 500;
+  margin: 2px 4px 2px 0; /* Ajustar margen */
+  color: white;
+  line-height: 1.2; /* Mejorar espaciado vertical si se envuelven */
+  display: inline-block; /* Asegurar comportamiento correcto en flujo */
+}
 
+/* Colores específicos para cada emoción */
+.emotion-tag.epic { background-color: #ff4757; }
+.emotion-tag.tension { background-color: #5352ed; }
+.emotion-tag.sad { background-color: #1e90ff; }
+.emotion-tag.nostalgia { background-color: #70a1ff; }
+.emotion-tag.happy { background-color: #ff6b81; }
+.emotion-tag.wonder { background-color: #ffa502; }
+/* Añadir más si tienes otras emociones */
+
+/* ================== Componentes UI Específicos ================== */
+
+/* --- Filtro de Emociones (Sidebar en index.html) --- */
+/* Nota: La clase .emotion-category y .emotion-title están en style.css */
+.emotion { /* Estilo para el ítem de emoción seleccionable */
+cursor: pointer;
+transition: transform 0.15s ease-out, background-color 0.15s ease-out, box-shadow 0.15s ease-out;
+padding: 8px 10px; /* Aumentar padding vertical */
+border-radius: var(--border-radius-small);
+margin-bottom: 5px; /* Reducir espacio inferior */
+display: flex; /* Para alinear contenido si hubiera iconos */
+align-items: center;
+}
+
+.emotion:hover {
+background-color: #f0f0f5; /* Gris muy claro al pasar */
+transform: translateX(3px); /* Ligero movimiento */
+}
+
+.emotion.selected { /* Estilo cuando se selecciona */
+background-color: var(--secondary-light); /* Fondo rosa pálido */
+/* box-shadow: 0 0 0 2px var(--secondary-color); /* Borde/sombra del color secundario */
+border-left: 3px solid var(--secondary-color); /* Indicador visual a la izquierda */
+color: var(--secondary-color); /* Color de texto */
+transform: translateX(0px); /* Resetear transform */
+padding-left: 7px; /* Compensar el borde izquierdo */
+}
+.emotion.selected .emotion-name {
+  font-weight: 600; /* Hacer texto más grueso al seleccionar */
+  color: var(--secondary-color);
+}
+
+.filter-button { /* Botón "Aplicar Filtro Emocional" */
+background-color: var(--primary-color); /* Usar color primario */
+color: white;
+border: none;
+padding: 10px 15px; /* Un poco más de padding */
+border-radius: var(--border-radius-xlarge); /* Más redondeado */
+cursor: pointer;
+margin-top: 20px; /* Más espacio arriba */
+font-weight: 600; /* Más grueso */
+transition: background-color 0.2s, transform 0.1s ease-out;
+width: 100%; /* Ocupar ancho */
+text-align: center;
+font-size: var(--font-size-normal);
+}
+
+.filter-button:hover {
+background-color: #5b54d4; /* Oscurecer primario */
+transform: scale(1.02); /* Ligero agrandamiento */
+}
+
+/* --- Botones "Ver Detalles" por Emoción (Si aún los usas) --- */
+/* Estos parecían ser específicos de una versión anterior, verificar si se usan */
+.anime-see {
+cursor: pointer;
+transition: transform 0.2s;
+font-weight: 500; /* Añadir un poco de grosor */
+}
+.anime-see:hover {
+transform: translateY(-2px);
+text-decoration: underline; /* Subrayar al pasar */
+}
+.anime-see.anime-blue { color: #1e90ff; }
+.anime-see.anime-pink { color: #ff6b81; }
+.anime-see.anime-yellow { color: #ffa502; }
+.anime-see.anime-purple { color: #5352ed; }
+
+
+/* ================== Mensajes y Alertas ================== */
+
+/* --- Mensaje de Error Flotante --- */
+.error-message {
+position: fixed;
+bottom: 20px;
+left: 50%;
+transform: translateX(-50%) translateY(100px); /* Empieza oculto abajo */
+background-color: #d32f2f; /* Rojo más oscuro/material */
+color: white;
+padding: 12px 25px; /* Más padding */
+border-radius: var(--border-radius-small);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+z-index: 1001; /* Asegurar que esté sobre otros elementos */
+opacity: 0;
+transition: transform 0.35s ease-out, opacity 0.35s ease-out;
+font-size: 0.95em;
+pointer-events: none; /* No interferir con clics */
+}
+.error-message.show {
+transform: translateX(-50%) translateY(0); /* Aparece desde abajo */
+opacity: 1;
+pointer-events: auto; /* Permitir interacción si fuera necesario */
+}
+
+/* ================== Estilos Obsoletos Eliminados ================== */
+/*
+* Se han eliminado los siguientes estilos que parecían obsoletos o duplicados:
+* - Estilos del Modal (.anime-modal, .modal-content, etc.): Reemplazado por detalle.html.
+* - Estilos de .loading-indicator: Definición principal movida/mantenida en style.css.
+* - Estilos de .no-results: Mejor definirlos globalmente en style.css o por componente.
+* - Animación @keyframes fadeIn: Si no se usa en otros elementos aquí, se puede eliminar.
+*/
+
+/* ================== Responsive (Si se necesitan ajustes adicionales) ================== */
+/* Aquí irían ajustes específicos de styles-additional si los de style.css no son suficientes */
+@media (max-width: 768px) {
+  /* Ajustar padding o tamaño de fuente de elementos específicos si es necesario */
+  .emotion-tag {
+      font-size: 10px;
+      padding: 4px 8px;
   }
+  .filter-button {
+      padding: 9px 14px;
+      font-size: 0.95em;
+  }
+  .error-message {
+      width: calc(100% - 40px); /* Ajustar ancho en pantallas pequeñas */
+      bottom: 10px;
+      padding: 10px 15px;
+  }
+}
+/* === Estilos para Header en Páginas sin Banner Superior === */
+/* Aplicar estos estilos por defecto en páginas como detalle, search, ranking */
+
+body.page-default-header .header {
+  background-color: var(--white); /* Fondo blanco */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06); /* Sombra */
+  color: var(--text-color); /* Color de texto general oscuro */
+  /* Asegurar que no herede la transición de background si no es necesario */
+  /* transition: none; */ /* Descomenta si notas transiciones raras al cargar */
+}
+
+/* --- Colores de los elementos internos del header --- */
+
+/* Título/Logo */
+body.page-default-header .header a.header-title-link .header-title {
+  color: var(--dark-text);
+}
+body.page-default-header .header a.header-title-link .header-title span {
+  color: var(--primary-color);
+}
+
+/* Botón Browse/Volver */
+body.page-default-header .header .browse-category {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  border: none;
+  /* Heredar estilos hover de .header-scrolled si es necesario */
+}
+body.page-default-header .header .browse-category svg {
+  stroke: var(--primary-color); /* Ajustar color del icono si es SVG de stroke */
+}
+
+
+/* Barra de Búsqueda */
+body.page-default-header .header .search-bar input#global-search-input {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  color: var(--dark-text);
+  border-right: none;
+}
+body.page-default-header .header .search-bar input#global-search-input::placeholder {
+  color: var(--light-text);
+}
+body.page-default-header .header .search-bar input#global-search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+body.page-default-header .header .search-bar button#global-search-button {
+  background-color: var(--white);
+  border-color: var(--border-color);
+  border-left: none;
+  color: var(--text-color); /* Color para el icono si es font, o para stroke */
+}
+body.page-default-header .header .search-bar button#global-search-button svg {
+  stroke: var(--text-color); /* Color del icono SVG */
+}
+/* Hover y focus igual que en .header-scrolled */
+body.page-default-header .header .search-bar button#global-search-button:hover {
+   background-color: #f0f0f5;
+   border-color: var(--primary-color);
+}
+body.page-default-header .header .search-bar input#global-search-input:focus + button#global-search-button {
+   border-color: var(--primary-color);
+}
+
+
+/* Iconos/Menú del Perfil */
+body.page-default-header .header .profile-menu {
+  color: var(--text-color);
+}
+body.page-default-header .header .profile-menu svg {
+  stroke: var(--light-text); /* Asumiendo que son iconos de stroke */
+  fill: none; /* Asegurar que no tengan relleno si son de stroke */
+}
+body.page-default-header .header .user-img {
+  background-color: #eee;
+  border: 1px solid var(--border-color);
+}

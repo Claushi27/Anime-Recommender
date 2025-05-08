@@ -81,7 +81,22 @@ img { max-width: 100%; height: auto; display: block; }
 .header.header-scrolled .search-bar input { background-color: var(--white); border-color: var(--border-color); color: var(--dark-text); }
 .header.header-scrolled .search-bar input::placeholder { color: var(--light-text); }
 .header.header-scrolled .search-bar input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(113, 105, 247, 0.15); }
+.detail-page-container + .header, /* Si el header está después del container en el DOM, o una clase específica */
+body.detalle-page .header { /* Si añades una clase al body de detalle.html */
+    background-color: var(--white);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06);
+    color: var(--text-color); /* Color de texto por defecto para header scrolleado */
+}
 
+body.detalle-page .header .header-title { color: var(--dark-text); }
+body.detalle-page .header .header-title span { color: var(--primary-color); }
+body.detalle-page .header .profile-menu { color: var(--text-color); }
+body.detalle-page .header .profile-menu svg { color: var(--light-text); }
+body.detalle-page .header .browse-category { /* Si lo tienes en detalle */
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border: none;
+}
 /* ================== Banner Slider ================== */
 .banner-slider-container {
   height: var(--banner-height); /* Usa la variable actualizada */

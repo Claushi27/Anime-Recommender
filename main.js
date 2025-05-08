@@ -872,34 +872,55 @@ async function handleEmotionFilter(selectedTags, page = 1) {
 // ==================================================
 // --- SETUP EVENT LISTENERS ---
 // ==================================================
+function performGlobalSearch() {
+  // Usar el ID específico del input global si se le dio uno
+  const searchInput = document.getElementById('global-search-input') || document.querySelector('.search-bar input'); // Fallback por si acaso
+  if (!searchInput) return; // Salir si no se encuentra el input
+
+  const query = searchInput.value.trim();
+  // Navegar a search.html, incluso si la query está vacía
+  window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+  // Ocultar sugerencias si estaban visibles
+  hideSuggestions();
+}
 function setupEventListeners() {
-  // Listener para la barra de búsqueda (Enter y Autocompletado)
-  if (searchBar) {
-      searchBar.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && this.value.trim()) {
-          const query = this.value.trim();
-          hideSuggestions();
-          window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+  // Selector para el input de búsqueda global
+  const globalSearchInput = document.getElementById('global-search-input') || document.querySelector('.search-bar input');
+  // Selector para el NUEVO botón de búsqueda global
+  const globalSearchButton = document.getElementById('global-search-button');
+
+  // Listener para el input de búsqueda global (Enter y Autocompletado)
+  if (globalSearchInput) {
+      globalSearchInput.addEventListener('keypress', function(e) {
+        // Si se presiona Enter, realizar la búsqueda global
+        if (e.key === 'Enter') {
+          performGlobalSearch();
         }
       });
-      searchBar.addEventListener('input', function() {
-        debouncedAutocompleteSearch(this.value.trim()); // Llamar a la versión debounced
+      // Listener para autocompletado (sin cambios)
+      globalSearchInput.addEventListener('input', function() {
+        debouncedAutocompleteSearch(this.value.trim());
       });
-      // Ocultar sugerencias si el input pierde foco (blur)
-      searchBar.addEventListener('blur', () => {
-          // Pequeño delay para permitir clic en sugerencia antes de ocultar
+      // Ocultar sugerencias al perder foco (sin cambios)
+      globalSearchInput.addEventListener('blur', () => {
           setTimeout(hideSuggestions, 150);
       });
-  } else { console.warn("Elemento searchBar no encontrado."); }
+  } else { console.warn("Input de búsqueda global no encontrado."); }
 
-  // Listener para ocultar sugerencias si se hace clic fuera
+  // Listener para el NUEVO botón de búsqueda global (Lupa)
+  if (globalSearchButton) {
+      globalSearchButton.addEventListener('click', performGlobalSearch);
+  } else { console.warn("Botón de búsqueda global (lupa) no encontrado."); }
+
+
+  // Listener para ocultar sugerencias si se hace clic fuera (sin cambios)
   document.addEventListener('click', function(event) {
       if (suggestionsContainer && !suggestionsContainer.contains(event.target) &&
-          searchBar && !searchBar.contains(event.target)) {
+          globalSearchInput && !globalSearchInput.contains(event.target) &&
+          globalSearchButton && !globalSearchButton.contains(event.target)) { // Añadir chequeo para el botón
           hideSuggestions();
       }
   });
-
   // Listeners para los filtros de GÉNERO
   if (animeTypes.length > 0) {
       animeTypes.forEach(type => {
