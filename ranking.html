@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ranking de Anime - AniEmotion</title>
+  <link rel="stylesheet" href="CSS/style.css">
+  <link rel="stylesheet" href="CSS/styles-additional.css">
+  <link rel="stylesheet" href="CSS/ranking.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="anime-store">
+    <div class="header header-scrolled"> <div class="browse">
+            <a href="index.html" class="browse-category" style="text-decoration: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left" width="18" height="18" style="margin-right: 5px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              Volver
+            </a>
+        </div>
+        <div class="header-title">ani<span>Emotion</span></div>
+        <div class="profile">
+            </div>
+    </div>
+
+    <div class="ranking-page-container">
+      <header class="ranking-header">
+        <h1>Top Anime Series</h1>
+        <p>Descubre los animes mejor valorados por la comunidad.</p>
+        </header>
+
+      <div class="loading-indicator" id="ranking-loading">Cargando ranking...</div>
+      <div id="ranking-list-container" class="ranking-list">
+        </div>
+      <div id="ranking-pagination-controls" class="pagination-container">
+        </div>
+    </div>
+
+  </div>
+  <script type="module" src="ranking.js"></script>
+</body>
+</html>

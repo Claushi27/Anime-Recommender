@@ -1,0 +1,180 @@
+/* CSS/ranking.css */
+
+.ranking-page-container {
+    max-width: 1000px; /* Ancho máximo para la lista de ranking */
+    margin: 20px auto;
+    padding: 20px;
+    background-color: var(--white);
+    border-radius: var(--border-radius-large);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.ranking-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ranking-header h1 {
+    font-size: 2.2em;
+    color: var(--dark-text);
+    margin-bottom: 8px;
+}
+
+.ranking-header p {
+    font-size: 1.1em;
+    color: var(--light-text);
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre ítems del ranking */
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    background-color: #fdfdfd; /* Fondo ligeramente diferente para cada item */
+    padding: 15px;
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.2s ease-out, transform 0.2s ease-out;
+    gap: 15px;
+}
+
+.ranking-item:hover {
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.rank-number {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--primary-color);
+    width: 40px; /* Ancho fijo para alineación */
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.rank-img {
+    width: 60px; /* Tamaño de la imagen thumbnail */
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--border-radius-small);
+    flex-shrink: 0;
+    background-color: #eee;
+}
+
+.rank-info {
+    flex-grow: 1;
+    min-width: 0; /* Para que text-overflow funcione */
+}
+
+.rank-title {
+    display: block; /* Para que ocupe su línea */
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+ .rank-title:hover {
+     color: var(--primary-color);
+ }
+
+.rank-meta {
+    font-size: 0.85em;
+    color: var(--light-text);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 12px; /* Espacio entre metadatos */
+    margin-bottom: 5px;
+}
+ .rank-meta i {
+     margin-right: 4px;
+ }
+
+.rank-genres {
+    font-size: 0.8em;
+    color: var(--text-color);
+    /* Podrías usar tags aquí si quieres, similar a los de las tarjetas */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rank-score-members {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    min-width: 120px; /* Ancho para la info de score/members */
+    flex-shrink: 0;
+}
+
+.rank-score-members .score {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.rank-score-members .score i { font-size: 0.9em; }
+
+
+.rank-score-members .members {
+    font-size: 0.85em;
+    color: var(--light-text);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+ .rank-score-members .members i { font-size: 0.9em; }
+
+/* Indicador de carga y paginación (reutiliza de style.css o añade específicos si es necesario) */
+#ranking-loading { font-size: 1.2em; padding: 40px 0; }
+#ranking-pagination-controls { margin-top: 30px; }
+
+
+ /* Responsive para Ranking */
+ @media (max-width: 768px) {
+     .ranking-page-container { padding: 15px; }
+     .ranking-header h1 { font-size: 1.8em; }
+     .ranking-header p { font-size: 1em; }
+
+     .ranking-item { flex-wrap: wrap; /* Permitir que elementos bajen */ padding: 12px; }
+     .rank-number { font-size: 1.3em; width: 30px; }
+     .rank-img { width: 50px; height: 75px; }
+     .rank-info { width: calc(100% - 95px); /* Ajustar ancho para que quepa con imagen y número */ margin-bottom: 10px; } /* Añadir espacio abajo si score baja */
+     .rank-title { font-size: 1.05em; }
+     .rank-meta { font-size: 0.8em; }
+     .rank-genres { font-size: 0.75em; }
+     .rank-score-members {
+         width: 100%; /* Ocupar todo el ancho cuando baje */
+         flex-direction: row; /* Poner score y members en línea */
+         justify-content: space-between; /* Distribuirlos */
+         align-items: center;
+         margin-top: 8px;
+         padding-top: 8px;
+         border-top: 1px dashed var(--border-color);
+     }
+     .rank-score-members .score { font-size: 1.1em; margin-bottom: 0; }
+     .rank-score-members .members { font-size: 0.8em; }
+ }
+
+ @media (max-width: 480px) {
+     .rank-info { width: 100%; order: 3; /* Info principal abajo */ text-align: center; }
+     .rank-img { order: 2; margin: 0 auto 10px auto; }
+     .rank-number { order: 1; width: 100%; text-align: left; margin-bottom: 5px;}
+     .rank-title { white-space: normal; }
+     .rank-meta { justify-content: center; }
+     .rank-genres { text-align: center; white-space: normal; }
+     .rank-score-members { order: 4; flex-direction: column; align-items: center; gap: 5px;}
+ }

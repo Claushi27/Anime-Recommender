@@ -1,10 +1,10 @@
-/* style.css - Versión Restaurada y Refinada del Banner Info/Imagen */
+/* style.css - Versión CORREGIDA para Tooltip y Estilos Base */
 
 /* ================== Variables Globales y Reset ================== */
 :root {
   --app-bg: #f5f5fc;
   --primary-color: #7169f7;
-  --primary-color-transparent-dark: rgba(28, 28, 30, 0.92); /* Panel oscuro más opaco */
+  --primary-color-transparent-dark: rgba(28, 28, 30, 0.92);
   --primary-light: #e1e0ff;
   --secondary-color: #ff6b6f;
   --secondary-light: #ffe4e8;
@@ -28,7 +28,7 @@
   --transition-fast: 0.2s ease-out;
   --transition-medium: 0.3s ease-out;
   --header-height: 65px;
-  --banner-height: 620px; /* Altura del banner ajustable */
+  --banner-height: 700px; /* Altura banner ajustada */
 }
 
 /* Reset y estilos base */
@@ -46,20 +46,16 @@ h1 { font-size: 1.8em; } h2 { font-size: 1.4em; } h3 { font-size: 1.2em; }
 a { color: var(--primary-color); text-decoration: none; transition: color var(--transition-fast); }
 a:hover { color: #5b54d4; }
 img { max-width: 100%; height: auto; display: block; }
-
-/* Placeholder genérico para imágenes no cargadas */
 .placeholder { display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.3); color: rgba(255,255,255,0.7); font-size: 0.9em; text-align: center; }
-
 
 /* ================== Header (Integrado y Fijo) ================== */
 .header {
   display: flex; align-items: center; height: var(--header-height); width: 100%; padding: 0 25px;
   position: fixed; top: 0; left: 0; z-index: 100; flex-shrink: 0;
   transition: background-color var(--transition-medium), box-shadow var(--transition-medium);
-  /* Default: Transparente */
   background-color: transparent; box-shadow: none; color: var(--white);
 }
-/* Estilos internos transparentes */
+/* (Estilos internos transparentes y scrolleados del header van aquí - SIN CAMBIOS de la versión anterior) */
 .header .header-title { font-size: var(--font-size-xlarge); font-weight: 700; margin: 0 auto; white-space: nowrap; color: var(--white); flex-grow: 0; flex-shrink: 0; text-align: center; }
 .header .header-title span { color: var(--primary-light); }
 .header .profile-menu { color: var(--white); cursor: pointer; font-size: var(--font-size-normal); font-weight: 500; white-space: nowrap; display: flex; align-items: center; margin-left: 12px; }
@@ -76,7 +72,6 @@ img { max-width: 100%; height: auto; display: block; }
 .header .search-bar input:focus { background-color: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1); }
 /* Estilo header scrolleado */
 .header.header-scrolled { background-color: var(--white); box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06); color: var(--text-color); }
-/* (Restaurar colores internos header scrolleado) */
 .header.header-scrolled .header-title { color: var(--dark-text); }
 .header.header-scrolled .header-title span { color: var(--primary-color); }
 .header.header-scrolled .profile-menu { color: var(--text-color); }
@@ -87,17 +82,11 @@ img { max-width: 100%; height: auto; display: block; }
 .header.header-scrolled .search-bar input::placeholder { color: var(--light-text); }
 .header.header-scrolled .search-bar input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(113, 105, 247, 0.15); }
 
-
-/* ================== Header (Integrado y Fijo) ================== */
-/* (Sin cambios respecto a la versión anterior) */
-.header { /* ... */ }
-.header.header-scrolled { /* ... */ }
-/* ... (Estilos internos del header sin cambios) ... */
-
-/* ================== Banner Slider (Alto 500px, Info 30% / Imagen 70%, Posición 40%) ================== */
+/* ================== Banner Slider ================== */
 .banner-slider-container {
+  height: var(--banner-height); /* Usa la variable actualizada */
+  /* ... (otros estilos de .banner-slider-container se mantienen) ... */
   position: relative; width: 100%;
-  height: var(--banner-height); /* Altura 500px */
   overflow: hidden; background-color: #1c1c1e;
   margin-bottom: 30px;
   margin-top: calc(-1 * var(--header-height));
@@ -106,25 +95,52 @@ img { max-width: 100%; height: auto; display: block; }
 .banner-slides { position: relative; width: 100%; height: 100%; }
 .banner-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s ease-in-out; z-index: 1; display: flex; align-items: stretch; background-color: #1c1c1e; }
 .banner-slide.active { opacity: 1; z-index: 2; }
-
-/* --- Panel de Información (Izquierda 30% - Oscuro) --- */
 .banner-info-panel {
-    flex: 0 0 30%; /* Mantenemos 30% */
-    padding: 30px 40px; /* Padding estándar */
-    padding-top: 45px; /* Espacio bajo header */
-    display: flex; flex-direction: column; justify-content: center;
-    background-color: var(--primary-color-transparent-dark);
-    color: var(--white);
-    position: relative;
-    z-index: 4;
-    overflow: hidden;
-    animation: textFadeIn 0.6s ease-out forwards;
-    opacity: 0;
+  flex: 0 0 30%; /* Volvemos a 40% o incluso un poco más si la imagen se ve mejor con menos ancho */
+  /* Si la imagen es muy vertical, el panel de info puede necesitar ser más ancho para compensar
+     y que el panel de imagen no quede demasiado estrecho y alto.
+     O, si el panel de imagen se hace MÁS ANCHO, la imagen vertical tendrá más espacio horizontal
+     para mostrarse con 'contain', o se 'acercará' menos con 'cover'.
+     Es un juego de equilibrios. */
+  padding: 30px 40px; /* Aumentar padding lateral si el panel es más ancho */
+  padding-top: 50px;
+  display: flex; flex-direction: column; justify-content: center;
+  background-color: var(--primary-color-transparent-dark); color: var(--white);
+  position: relative; z-index: 4; overflow: hidden;
+  animation: textFadeIn 0.6s ease-out forwards; opacity: 0;
 }
+.banner-info-panel .banner-studio {
+  font-size: 0.95em;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: fit-content;
+}
+
+.banner-info-panel .banner-genres-container {
+  margin-bottom: 12px; /* Espacio antes del siguiente elemento (ahora emociones) */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.banner-info-panel .banner-genre-tag {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 5px 10px;
+  border-radius: var(--border-radius-large);
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
 .banner-slide.active .banner-info-panel { opacity: 1; }
 @keyframes textFadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-
-/* Estilos contenido info panel (ajustados para altura 500px) */
+/* (Estilos internos del panel de info sin cambios significativos) */
 .banner-info-panel .banner-spotlight { display: block; font-size: 0.9em; font-weight: 600; margin-bottom: 10px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px; }
 .banner-info-panel .banner-title { font-size: 2.2em; font-weight: 700; margin-bottom: 15px; color: var(--white); line-height: 1.25; }
 .banner-info-panel .banner-meta { display: flex; flex-wrap: wrap; gap: 8px 15px; margin-bottom: 18px; font-size: 0.9em; color: rgba(255, 255, 255, 0.75); align-items: center;}
@@ -132,51 +148,68 @@ img { max-width: 100%; height: auto; display: block; }
 .banner-info-panel .banner-meta span i { margin-right: 7px; font-size: 1em; opacity: 0.8; width: 1em; text-align: center; }
 .banner-info-panel .banner-meta span.score { font-weight: 600; color: var(--white); background-color: rgba(255, 215, 0, 0.15); }
 .banner-info-panel .banner-meta span.score i { color: #FFD700; }
-
-.banner-info-panel .banner-synopsis { font-size: 0.95em; line-height: 1.6; margin-bottom: 25px; color: rgba(255, 255, 255, 0.9); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; /* 4 líneas ahora */ -webkit-box-orient: vertical; }
+.banner-info-panel .banner-synopsis {
+  font-size: 0.95em;
+  line-height: 1.6;
+  /* Aumentar margen inferior para separar más del botón */
+  margin-bottom: 30px; /* Antes era 25px */
+  color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  display: -webkit-box;
+  /* *** PERMITIR MÁS LÍNEAS *** */
+  -webkit-line-clamp: 4; /* Antes 3, permitir 4 líneas */
+  -webkit-box-orient: vertical;
+  /* Opcional: ajustar min-height si es necesario para evitar saltos */
+  /* min-height: calc(1.6em * 4); */
+}
+/* NUEVA REGLA para el contenedor de emociones */
+.banner-info-panel .banner-emotions-container {
+  margin-bottom: 12px; /* Espacio antes de la sinopsis */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .banner-info-panel .banner-actions button { padding: 10px 20px; border-radius: var(--border-radius-xlarge); border: none; font-size: var(--font-size-normal); font-weight: 600; cursor: pointer; margin-right: 10px; transition: all var(--transition-fast); }
 .banner-info-panel .banner-actions .btn-detail { background-color: var(--primary-color); color: var(--white); border: none; }
 .banner-info-panel .banner-actions .btn-detail:hover { background-color: #5b54d4; transform: scale(1.03); }
-
-/* --- Panel de Imagen (Derecha 70% - Cover, Posición 40%) --- */
 .banner-image-panel {
-    flex: 1; /* Ocupa 70% */
-    background-size: cover;
-    background-position: center 40%; /* NUEVO: Centrado horizontal, 40% desde arriba verticalmente */
-    background-repeat: no-repeat;
-    height: 100%;
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
+  flex: 1; /* Ocupará el espacio restante (aprox 62%) */
+  background-size: cover;
+  background-position: center 25%; /* CAMBIO: centrado general */
+  background-repeat: no-repeat;
+  height: 100%; position: relative; z-index: 1; overflow: hidden;
 }
-.banner-image-panel .placeholder { position: absolute; /* ... */ }
-
-/* Degradado para suavizar borde izquierdo de la imagen */
+.banner-image-panel .placeholder { position: absolute; inset: 0; }
 .banner-image-panel::before {
-    content: ''; position: absolute; top: 0; left: 0; bottom: 0;
-    width: 200px;
-    background: linear-gradient(to right, var(--primary-color-transparent-dark) 0%, transparent 100%);
-    z-index: 2; pointer-events: none;
-    opacity: 1;
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 150px; /* Reducido un poco si el panel de info es más pequeño */
+  background: linear-gradient(to right, var(--primary-color-transparent-dark) 0%, transparent 100%);
+  z-index: 2; pointer-events: none; opacity: 1;
 }
 
-/* --- Controles de Navegación y Puntos --- */
+/* (Controles de navegación y puntos sin cambios) */
 .banner-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 5; background-color: rgba(0, 0, 0, 0.3); color: white; border: none; padding: 10px 12px; cursor: pointer; border-radius: 50%; font-size: 20px; line-height: 1; transition: background-color var(--transition-fast); }
 .banner-nav:hover { background-color: rgba(0, 0, 0, 0.6); }
 .banner-nav.prev { left: 20px; }
 .banner-nav.next { right: 20px; }
-.banner-dots { position: absolute; bottom: 20px; left: calc(40% + (60% / 2)); transform: translateX(-50%); z-index: 5; display: flex; gap: 10px; }
-.banner-dot { width: 10px; height: 10px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.3); border: none; padding: 0; cursor: pointer; transition: background-color var(--transition-fast); }
+.banner-dots {
+  position: absolute;
+  bottom: 20px;
+  left: calc(38% + (62% / 2)); /* Ajustado a 38% si cambiaste el panel de info */
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+}.banner-dot { width: 10px; height: 10px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.3); border: none; padding: 0; cursor: pointer; transition: background-color var(--transition-fast); }
 .banner-dot.active { background-color: rgba(255, 255, 255, 0.8); }
 
-
-/* ================== Secciones Existentes ================== */
+/* ================== Secciones Generales y Contenido Principal ================== */
 .section-container { padding: 25px; margin-bottom: 30px; background-color: var(--white); border-radius: var(--border-radius-large); box-shadow: 0 4px 12px var(--shadow-light); }
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .section-title { font-size: var(--font-size-xlarge); font-weight: 700; margin: 0; color: var(--dark-text); }
 .main-wrapper { display: flex; padding: 0 25px; margin-bottom: 40px; gap: 30px; flex-grow: 1; }
 aside.emotions-of { flex: 0 0 250px; }
 main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+/* (Estilos de filtros de emoción y género sin cambios) */
 .emotion-category { background-color: var(--white); border-radius: var(--border-radius-large); padding: 20px; box-shadow: 0 4px 12px var(--shadow-light); margin-bottom: 20px; }
 .emotion-title { font-size: var(--font-size-medium); font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); color: var(--dark-text); }
 .emotion { display: flex; align-items: center; margin-bottom: 8px; padding: 8px; border-radius: var(--border-radius-small); cursor: pointer; transition: background-color var(--transition-fast); }
@@ -193,30 +226,152 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
 .anime-type:hover { background-color: #e5e5ea; }
 .anime-type.active { background-color: var(--primary-color); color: var(--white); }
 /* Contenedores Tarjetas */
-.anime-cards { display: flex; overflow-x: auto; overflow-y: hidden; padding: 10px 2px 20px 2px; gap: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--primary-light) transparent; }
+.anime-cards { /* Para sliders horizontales */
+  display: flex; overflow-x: auto; overflow-y: hidden; padding: 10px 2px 20px 2px;
+  gap: 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  margin-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--primary-light) transparent;
+}
 .anime-cards::-webkit-scrollbar { height: 8px; }
 .anime-cards::-webkit-scrollbar-track { background: transparent; }
 .anime-cards::-webkit-scrollbar-thumb { background-color: var(--primary-light); border-radius: 4px; }
 .anime-cards::-webkit-scrollbar-thumb:hover { background-color: var(--primary-color); }
-.anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; padding-top: 10px; }
-/* Tarjeta Normal */
-.anime-card { background-color: var(--white); border-radius: var(--border-radius-medium); overflow: hidden; box-shadow: 0 3px 8px var(--shadow-light); display: flex; flex-direction: column; transition: transform var(--transition-fast), box-shadow var(--transition-fast); position: relative; scroll-snap-align: start; cursor: pointer; }
-.anime-cards .anime-card { flex: 0 0 240px; min-width: 240px; }
-.anime-card:hover { transform: translateY(-3px); box-shadow: 0 6px 14px var(--shadow-medium); }
-.anime-card .content-wrapper { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; }
-.anime-card .anime-card-img { width: 100%; height: 160px; object-fit: cover; border-radius: var(--border-radius-small); margin-bottom: 10px; display: block; background-color: #eee; }
-.anime-card .anime-card-img.placeholder { height: 160px; display: flex; align-items: center; justify-content: center; color: var(--light-text); font-size: 0.9em; }
-.anime-card .card-content { flex-grow: 1; margin-bottom: 10px; display: flex; flex-direction: column; }
-.anime-card .anime-name { font-size: var(--font-size-normal); font-weight: 600; margin-bottom: 4px; color: var(--dark-text); line-height: 1.3; min-height: calc(1.3em * 2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.anime-card .anime-by { font-size: var(--font-size-small); color: var(--light-text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.anime-card .emotion-tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; min-height: 23px; }
-.anime-card .emotion-tags-container .emotion-tag { padding: 3px 8px; font-size: 11px; line-height: 1; /* Colores en styles-additional.css */ }
-.anime-card .anime-sum { font-size: var(--font-size-small); line-height: 1.4; color: var(--text-color); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-top: auto; }
-.anime-card .likes { padding: 8px 12px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
-.anime-card .like-name { font-size: var(--font-size-small); color: var(--light-text); margin-left: 0; }
-.anime-card .like-name span { font-weight: 600; color: var(--text-color); }
 
-/* ================== Paginación, Sugerencias, Loaders ================== */
+.anime-grid { /* Para la sección principal */
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 25px; padding-top: 10px;
+}
+
+/* ================== Tarjeta de Anime con Tooltip (CORREGIDO) ================== */
+.anime-grid .anime-card,
+.anime-cards .anime-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-medium);
+  overflow: visible; /* IMPORTANTE: Debe ser visible para que el tooltip no se corte */
+  box-shadow: 0 3px 8px var(--shadow-light);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative; /* NECESARIO para posicionar el tooltip */
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+/* Ancho base para tarjetas en sliders */
+.anime-cards .anime-card {
+  flex: 0 0 240px;
+  min-width: 240px;
+}
+/* Ancho para tarjetas en el slider "Top 10" */
+.top-ranked-section .horizontal-scroll-container .anime-card {
+    flex-basis: 180px;
+    min-width: 180px;
+}
+
+.anime-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 7px 16px var(--shadow-medium);
+}
+
+/* Contenedor de la parte visible por defecto */
+.anime-card-visible-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius-medium); /* Redondear aquí */
+    overflow: hidden; /* Cortar contenido (imagen) que se salga */
+}
+
+.anime-card .anime-card-img {
+  width: 100%;
+  height: 280px; /* Altura base de la imagen, AJUSTA */
+  object-fit: cover;
+  display: block;
+  background-color: #eee;
+}
+/* Altura imagen para slider Top 10 */
+.top-ranked-section .horizontal-scroll-container .anime-card .anime-card-img {
+    height: 220px; /* Altura más pequeña */
+}
+
+.anime-card .anime-card-title-minimal {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--dark-text);
+  padding: 10px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: var(--white); /* Fondo explícito */
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0; /* Evitar que se encoja */
+  /* Los bordes redondeados ahora están en .anime-card-visible-content */
+}
+
+/* --- Tooltip --- */
+.anime-card-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px); /* Posicionar encima con 8px de espacio */
+  left: 50%;
+  transform: translateX(-50%) scale(0.95) translateY(5px); /* Centrado, escala inicial, ligero offset Y */
+  width: 280px;
+  max-width: calc(100% + 40px);
+  background-color: rgba(30, 30, 35, 0.97);
+  color: var(--white);
+  border-radius: var(--border-radius-small);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  padding: 15px;
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0s 0.25s;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.anime-card:hover .anime-card-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scale(1) translateY(0);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out, visibility 0s 0s;
+}
+
+/* (Estilos internos del tooltip: .tooltip-title, .tooltip-score, etc. van aquí - SIN CAMBIOS de la versión anterior) */
+.anime-card-tooltip .tooltip-title { font-size: 1.1em; font-weight: 700; color: var(--white); margin: 0 0 10px 0; line-height: 1.3; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+.anime-card-tooltip .tooltip-score { font-size: 1em; font-weight: bold; color: #FFD700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.anime-card-tooltip .tooltip-score i { font-size: 0.9em; }
+.anime-card-tooltip .tooltip-info { font-size: 0.85em; color: rgba(255, 255, 255, 0.85); margin-bottom: 12px; line-height: 1.5; }
+.anime-card-tooltip .tooltip-info span { margin-right: 4px; }
+.anime-card-tooltip .tooltip-info span:not(:last-child)::after { content: "•"; margin-left: 4px; opacity: 0.7; }
+.anime-card-tooltip .tooltip-genres,
+.anime-card-tooltip .tooltip-emotions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.anime-card-tooltip .tag { font-size: 0.75em; padding: 4px 9px; border-radius: 12px; line-height: 1; font-weight: 500; }
+.anime-card-tooltip .genre-tag { background-color: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.9); }
+.anime-card-tooltip .tooltip-synopsis { font-size: 0.8em; line-height: 1.5; color: rgba(255, 255, 255, 0.8); margin-bottom: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+
+/* ================== Sección Top Ranked ================== */
+.top-ranked-section { padding: 25px; margin-bottom: 20px; /* Reducir margen inferior */ background-color: var(--white); border-radius: var(--border-radius-large); box-shadow: 0 4px 12px var(--shadow-light); }
+.top-ranked-section .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.top-ranked-section .section-title { font-size: var(--font-size-xlarge); font-weight: 700; color: var(--dark-text); }
+.view-all-link { font-size: 0.9em; font-weight: 500; color: var(--primary-color); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+.view-all-link:hover { text-decoration: underline; }
+.view-all-link i { font-size: 0.8em; }
+.top-ranked-section .horizontal-scroll-container { /* Contenedor específico para el slider top ranked */
+    display: flex; overflow-x: auto; overflow-y: hidden; gap: 15px; /* Espacio más pequeño */ padding: 10px 2px 20px 2px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    /* (Estilos scrollbar sin cambios) */
+}
+.top-ranked-section .horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
+.top-ranked-section .horizontal-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px;}
+.top-ranked-section .horizontal-scroll-container::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 4px;}
+.top-ranked-section .horizontal-scroll-container::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+
+
+/* ================== Paginación, Sugerencias, Loaders, Error ================== */
+/* (Sin cambios respecto a la versión anterior) */
 .pagination-container { display: flex; justify-content: center; align-items: center; margin-top: 30px; margin-bottom: 20px; padding: 10px; width: 100%; flex-shrink: 0; visibility: visible; opacity: 1; position: relative; z-index: 1; }
 .pagination-button { background-color: var(--primary-color); color: var(--white); border: none; padding: 8px 15px; border-radius: var(--border-radius-xlarge); cursor: pointer; margin: 0 8px; font-size: var(--font-size-normal); font-weight: 500; transition: background-color var(--transition-fast), opacity var(--transition-fast); }
 .pagination-button:hover:not(:disabled) { background-color: #5b54d4; }
@@ -233,16 +388,13 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
 .loading-indicator.show { display: block; }
 .loading-indicator.show::before { content: ''; display: inline-block; width: 24px; height: 24px; border: 3px solid var(--primary-light); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* Mensaje error */
 .error-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background-color: #ff4757; color: white; padding: 10px 20px; border-radius: 5px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000; opacity: 0; transition: transform 0.3s, opacity 0.3s; }
 .error-message.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-/* Mensaje sin resultados */
 .no-results { text-align: center; padding: 40px; font-size: 1.1em; color: var(--light-text); grid-column: 1 / -1; }
 
 /* ================== Media Queries ================== */
-@media screen and (max-width: 1024px) {
-  /* Tablet */
-  :root { --header-height: 60px; --banner-height: 340px; }
+@media screen and (max-width: 1024px) { /* Tablet */
+  :root { --header-height: 60px; --banner-height: 420px; } /* Banner un poco más alto en tablet */
   body { padding-top: var(--header-height); }
   .header { padding: 0 20px; }
   .main-wrapper { gap: 25px; padding: 0 20px; }
@@ -250,20 +402,21 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
   .anime-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px;}
   .anime-cards { gap: 15px; }
   .anime-cards .anime-card { flex-basis: 210px; min-width: 210px; }
+   .anime-card .anime-card-img { height: 260px; } /* Ajustar altura imagen */
+  .top-ranked-section .horizontal-scroll-container .anime-card { flex-basis: 160px; min-width: 160px; }
+  .top-ranked-section .horizontal-scroll-container .anime-card .anime-card-img { height: 200px; }
   .section-title { font-size: var(--font-size-large); }
   .anime-type { font-size: 11px; padding: 4px 10px; }
-  /* Banner Tablet */
   .banner-info-panel { flex-basis: 45%; padding: 25px 30px; padding-top: 35px; }
   .banner-info-panel .banner-title { font-size: 1.9em; }
-  .banner-image-panel::before { width: 100px; }
-  .banner-dots { left: calc(45% + (55% / 2)); }
+  .banner-image-panel::before { width: 90px; }
+  .banner-dots { left: calc(55% + (45% / 2)); }
+  .anime-card-tooltip { width: 260px; }
 }
 
-@media screen and (max-width: 768px) {
-  /* Móvil */
+@media screen and (max-width: 768px) { /* Móvil */
   :root { --header-height: 55px; --banner-height: auto; }
   body { padding-top: var(--header-height); }
-  /* Header blanco en móvil */
   .header, .header.header-scrolled { background-color: var(--white); box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06); color: var(--text-color); }
   .header .header-title, .header.header-scrolled .header-title { color: var(--dark-text); }
   .header .header-title span, .header.header-scrolled .header-title span { color: var(--primary-color); }
@@ -277,8 +430,6 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
   .header .search-bar { flex-grow: 1; margin: 0 10px;}
   .header .search-bar input { font-size: var(--font-size-small); height: 34px; }
   .header .browse-category { display: none; }
-
-  /* Banner en móvil: Info arriba, Imagen abajo */
   .banner-slider-container { margin-top: 0; height: auto; border-bottom: none;}
   .banner-slide { flex-direction: column; height: auto; }
   .banner-info-panel { flex-basis: auto; padding: 20px; background-color: #1c1c1e; animation: none; opacity: 1; }
@@ -288,9 +439,7 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
   .banner-image-panel::before { display: none; }
   .banner-nav { display: none; }
   .banner-dots { bottom: 10px; left: 50%; transform: translateX(-50%); }
-
-  /* Layout General Móvil */
-  .section-container, .latest-releases-section { padding: 15px; margin-bottom: 20px; border-radius: var(--border-radius-medium);}
+  .section-container, .latest-releases-section, .top-ranked-section { padding: 15px; margin-bottom: 20px; border-radius: var(--border-radius-medium);}
   .section-title { font-size: var(--font-size-large); }
   .main-wrapper { flex-direction: column; gap: 20px; padding: 0 15px; }
   aside.emotions-of { flex-basis: auto; order: 2; }
@@ -298,23 +447,21 @@ main.popular-anime { flex-grow: 1; min-width: 0; display: flex; flex-direction: 
   .popular-anime .main-menu { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 15px;}
   .anime-types { justify-content: flex-start; }
   .anime-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-  /* Tarjetas normales en móvil */
   .anime-cards { gap: 15px; padding: 10px 2px 15px 2px; margin-bottom: 15px;}
   .anime-card { border-radius: var(--border-radius-small); }
   .anime-cards .anime-card { flex-basis: 155px; min-width: 155px; }
   .anime-grid .anime-card { min-width: 150px; }
-  .anime-card .content-wrapper { padding: 10px; }
-  .anime-card .anime-card-img { height: 100px; border-radius: var(--border-radius-small); }
-  .anime-card .anime-card-img.placeholder { height: 100px; }
-  .anime-card .anime-name { font-size: var(--font-size-small); min-height: calc(1.3em * 2); }
-  .anime-card .anime-by { font-size: 11px; }
-  .anime-card .emotion-tags-container { margin-bottom: 5px; min-height: 18px; }
-  .anime-card .emotion-tags-container .emotion-tag { font-size: 9px; padding: 2px 6px;}
-  .anime-card .anime-sum { display: none; }
-  .anime-card .likes { padding: 6px 10px; }
-  .anime-card .like-name { font-size: 11px; }
-  /* Paginación móvil */
+   .anime-card .anime-card-img { height: 200px; } /* Altura imagen móvil */
+   .top-ranked-section .horizontal-scroll-container .anime-card { flex-basis: 140px; min-width: 140px; }
+   .top-ranked-section .horizontal-scroll-container .anime-card .anime-card-img { height: 180px; }
+  .anime-card .anime-card-title-minimal { font-size: 0.85em; padding: 8px; }
   .pagination-container { margin-top: 20px; }
   .pagination-button { padding: 7px 13px; font-size: var(--font-size-small); margin: 0 5px; }
   .page-indicator { font-size: var(--font-size-small); margin: 0 8px; }
+  /* Tooltip en móvil (puede mostrarse debajo si se corta) */
+   .anime-card:hover .anime-card-tooltip {
+      width: 240px;
+      /* Descomenta la siguiente línea si prefieres que salga debajo en móvil */
+      /* bottom: auto; top: calc(100% + 8px); */
+   }
 }
