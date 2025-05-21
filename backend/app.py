@@ -2,12 +2,15 @@
 
 import json
 import os
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
-import re
-import time
-import math
-import pandas as pd
+from flask import Flask, jsonify, request, send_from_directory 
+from flask_cors import CORS 
+import re 
+import time 
+import math 
+import pandas as pd 
+from flask_sqlalchemy import SQLAlchemy 
+from werkzeug.security import generate_password_hash, check_password_hash 
+from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity 
 
 # --- Definición de Rutas Base ---
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -20,22 +23,85 @@ app = Flask(__name__,
             template_folder=TEMPLATE_FOLDER,
             static_url_path='')
 
+# --- Configuración de la Base de Datos y JWT ---
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost/aniemotion_db' 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = 'tu-super-secreta-y-larga-clave-jwt-aniemotion-123!@#' 
+db = SQLAlchemy(app)
+jwt = JWTManager(app)
+
 # --- Habilitar CORS ---
 CORS(app)
 
+# --- Modelos SQLAlchemy ---
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
+    updated_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    anime_list_entries = db.relationship('UserAnimeList', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
+    reviews = db.relationship('AnimeReview', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
+    def set_password(self, password): self.password_hash = generate_password_hash(password)
+    def check_password(self, password): return check_password_hash(self.password_hash, password)
+    def __repr__(self): return f'<User {self.username}>'
+
+class UserAnimeList(db.Model):
+    __tablename__ = 'user_anime_list'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    anime_mal_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Enum('watching', 'completed', 'planned', 'dropped', 'on_hold', 'favorites', name='animestatusenum'), nullable=False)
+    score = db.Column(db.Integer, db.CheckConstraint('score IS NULL OR (score >= 1 AND score <= 10)'))
+    episodes_watched = db.Column(db.Integer)
+    added_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
+    updated_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    user = db.relationship('User', back_populates='anime_list_entries')
+    __table_args__ = (db.UniqueConstraint('user_id', 'anime_mal_id', name='uk_user_anime'),)
+    def __repr__(self): return f'<UserAnimeList user_id={self.user_id} anime_id={self.anime_mal_id} status={self.status}>'
+    def to_dict(self):
+        return {
+            'id': self.id, 'user_id': self.user_id, 'anime_mal_id': self.anime_mal_id,
+            'status': self.status, 'score': self.score, 'episodes_watched': self.episodes_watched,
+            'added_at': self.added_at.isoformat() if self.added_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class AnimeReview(db.Model):
+    __tablename__ = 'anime_reviews'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    anime_mal_id = db.Column(db.Integer, nullable=False)
+    review_text = db.Column(db.Text, nullable=False)
+    rating_given = db.Column(db.Integer, db.CheckConstraint('rating_given IS NULL OR (rating_given >= 1 AND rating_given <= 10)'))
+    is_spoiler = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
+    updated_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    user = db.relationship('User', back_populates='reviews')
+    __table_args__ = (db.UniqueConstraint('user_id', 'anime_mal_id', name='uk_user_anime_review'),)
+    def __repr__(self): return f'<AnimeReview user_id={self.user_id} anime_id={self.anime_mal_id}>'
+    def to_dict(self):
+        return {
+            'id': self.id, 'user_id': self.user_id, 'username': self.user.username, 
+            'anime_mal_id': self.anime_mal_id, 'review_text': self.review_text,
+            'rating_given': self.rating_given, 'is_spoiler': self.is_spoiler,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
 # --- Mapeo TAGS a Emociones y Funciones Helper ---
+# (Sin cambios)
 tag_emotion_map = {
-    'action': ['epic', 'tension'], 'adventure': ['epic', 'wonder'],
-    'comedy': ['happy', 'wonder'], 'drama': ['sad', 'nostalgia'],
-    'slice of life': ['nostalgia', 'happy'], 'horror': ['tension', 'wonder'],
-    'thriller': ['tension', 'epic'], 'suspense': ['tension'],
-    'psychological': ['tension', 'sad'], 'sci-fi': ['wonder', 'epic'],
-    'fantasy': ['wonder', 'epic'], 'romance': ['nostalgia', 'happy'],
-    'music': ['nostalgia', 'happy'], 'sports': ['epic', 'happy'],
-    'supernatural': ['wonder', 'tension'], 'mystery': ['tension', 'wonder'],
-    'default': ['epic', 'wonder']
+    'action': ['epic', 'tension'], 'adventure': ['epic', 'wonder'], 'comedy': ['happy', 'wonder'], 
+    'drama': ['sad', 'nostalgia'], 'slice of life': ['nostalgia', 'happy'], 'horror': ['tension', 'wonder'],
+    'thriller': ['tension', 'epic'], 'suspense': ['tension'], 'psychological': ['tension', 'sad'], 
+    'sci-fi': ['wonder', 'epic'], 'fantasy': ['wonder', 'epic'], 'romance': ['nostalgia', 'happy'],
+    'music': ['nostalgia', 'happy'], 'sports': ['epic', 'happy'], 'supernatural': ['wonder', 'tension'], 
+    'mystery': ['tension', 'wonder'], 'default': ['epic', 'wonder']
 }
-def extract_mal_id(sources):
+def extract_mal_id(sources): # (Sin cambios)
     if not isinstance(sources, list): return None
     for url in sources:
         if isinstance(url, str) and 'myanimelist.net/anime/' in url:
@@ -44,358 +110,315 @@ def extract_mal_id(sources):
                 try: return int(match.group(1))
                 except ValueError: continue
     return None
-
-def assign_emotions_from_tags(tags):
+def assign_emotions_from_tags(tags): # (Sin cambios)
     if not isinstance(tags, list) or len(tags) == 0: return ",".join(tag_emotion_map['default'])
     emotions_set = set(); found_specific_emotion = False
     for tag in tags:
-        # Asegurarse que tag es string antes de lower()
         emotions = tag_emotion_map.get(str(tag).lower() if tag else "")
         if emotions and len(emotions) > 0:
             found_specific_emotion = True
             for emotion in emotions: emotions_set.add(emotion)
-    if not found_specific_emotion and tags: # Si hay tags pero ninguno mapeó, usar default
+    if not found_specific_emotion and tags:
         for emotion in tag_emotion_map['default']: emotions_set.add(emotion)
-    elif not tags: # Si no hay tags, usar default
+    elif not tags:
          for emotion in tag_emotion_map['default']: emotions_set.add(emotion)
     final_emotions = list(emotions_set)
     return ",".join(final_emotions)
 
 # --- Carga y Preprocesamiento de Datos JSON ---
+# (Sin cambios)
 anime_data = []
-anime_df = None # DataFrame global para el ranking custom
+anime_df = None
 try:
-    start_time = time.time()
-    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    start_time = time.time(); backend_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(backend_dir, '..', 'data', 'anime-offline-database-minified.json')
     json_path = os.path.normpath(json_path)
-    print(f">>> Intentando cargar JSON desde: {json_path}")
-
-    if not os.path.exists(json_path):
-         print(f">>> ERROR: Archivo JSON no encontrado en: {json_path}")
+    if not os.path.exists(json_path): print(f">>> ERROR: Archivo JSON no encontrado en: {json_path}")
     else:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            raw_database_object = json.load(f)
-        print(">>> JSON cargado. Preprocesando datos...")
-        processed_count = 0; skipped_count = 0
-        temp_anime_list = []
+        with open(json_path, 'r', encoding='utf-8') as f: raw_database_object = json.load(f)
+        processed_count = 0; skipped_count = 0; temp_anime_list = []
         for anime_dict_raw in raw_database_object.get('data', []):
-            # Copiar el diccionario para no modificar el original si es necesario
-            anime_dict = dict(anime_dict_raw)
-            mal_id = extract_mal_id(anime_dict.get('sources'))
+            anime_dict = dict(anime_dict_raw); mal_id = extract_mal_id(anime_dict.get('sources'))
             if mal_id:
-                anime_dict['mal_id'] = mal_id
-                anime_dict['emotions_assigned'] = assign_emotions_from_tags(anime_dict.get('tags'))
-                # Extraer score y members/scored_by para el DataFrame
+                anime_dict['mal_id'] = mal_id; anime_dict['emotions_assigned'] = assign_emotions_from_tags(anime_dict.get('tags'))
                 try:
                     anime_dict['score_value'] = float(anime_dict.get('score', {}).get('arithmeticMean', 0))
-                    if anime_dict['score_value'] == 0 and anime_dict.get('score'): # Si arithmeticMean no está pero score sí
-                        # Intenta otras llaves comunes o un promedio si hay múltiples scores
-                         # Esto es un ejemplo, ajusta según tu estructura si 'score' es un número directo
-                        if isinstance(anime_dict.get('score'), (int, float)):
-                             anime_dict['score_value'] = float(anime_dict.get('score'))
-                except (ValueError, TypeError):
-                    anime_dict['score_value'] = 0.0
-
+                    if anime_dict['score_value'] == 0 and anime_dict.get('score'):
+                        if isinstance(anime_dict.get('score'), (int, float)): anime_dict['score_value'] = float(anime_dict.get('score'))
+                except (ValueError, TypeError): anime_dict['score_value'] = 0.0
                 try:
-                    # Prioriza 'members', luego 'scoredBy', luego 0
-                    # El JSON parece usar 'relations' con 'relation': 'parent story' para 'members' a veces.
-                    # MAL API usualmente tiene 'members' o 'scored_by'
-                    # Tu JSON tiene 'num_scoring_users' a veces dentro de 'statistics' si viniera de Jikan API directamente
-                    # Para el JSON offline, 'members' o un campo similar debe ser identificado.
-                    # Asumiremos que 'num_scoring_users' podría estar o un campo 'members' si lo añades
-                    # Por ahora, vamos a usar 'score.usersSkippedPlanning', que no es correcto, pero es un ejemplo de un campo numérico.
-                    # NECESITAS IDENTIFICAR EL CAMPO CORRECTO PARA "NÚMERO DE VOTOS/MIEMBROS" EN TU JSON
-                    # Ejemplo temporal (DEBES CAMBIAR ESTO POR EL CAMPO CORRECTO DE TU JSON):
-                    if 'num_scoring_users' in anime_dict.get('statistics', {}): # Si tuvieras statistics de Jikan
-                         anime_dict['members_count'] = int(anime_dict['statistics']['num_scoring_users'])
-                    elif 'members' in anime_dict: # Si tuvieras un campo 'members' directo
-                         anime_dict['members_count'] = int(anime_dict['members'])
-                    else: # Fallback si no se encuentra un campo de conteo de votos/miembros
-                        # Para el offline DB, 'score.usersVoted' podría ser el campo.
-                        # O si el score viene de 'score' {'votes': X, 'mean': Y}, usar 'score.votes'
-                        # Verifica la estructura de 'score' y 'ranking'/'popularity' en tu JSON.
-                        # Por ahora, un placeholder:
-                        anime_dict['members_count'] = int(anime_dict.get('score', {}).get('usersVoted', 0)) # EJEMPLO, VERIFICA TU JSON!
-
-                except (ValueError, TypeError):
-                    anime_dict['members_count'] = 0
-
-                temp_anime_list.append(anime_dict)
-                processed_count += 1
-            else:
-                skipped_count += 1
-        
-        anime_data = temp_anime_list # Usar para la recomendación por emoción
-        anime_df = pd.DataFrame(temp_anime_list) # Crear DataFrame para el ranking custom
-
-        end_time = time.time()
-        print(f">>> Preprocesamiento completo. {processed_count} animes cargados en lista y DataFrame, {skipped_count} omitidos. Tiempo: {end_time - start_time:.2f}s.")
-        if not anime_df.empty:
-            print(">>> DataFrame Columnas:", anime_df.columns.tolist())
-            print(">>> DataFrame Head (score_value, members_count):\n", anime_df[['title', 'mal_id', 'score_value', 'members_count']].head())
+                    if 'num_scoring_users' in anime_dict.get('statistics', {}): anime_dict['members_count'] = int(anime_dict['statistics']['num_scoring_users'])
+                    elif 'members' in anime_dict: anime_dict['members_count'] = int(anime_dict['members'])
+                    else: anime_dict['members_count'] = int(anime_dict.get('score', {}).get('usersVoted', 0))
+                except (ValueError, TypeError): anime_dict['members_count'] = 0
+                temp_anime_list.append(anime_dict); processed_count += 1
+            else: skipped_count += 1
+        anime_data = temp_anime_list; anime_df = pd.DataFrame(temp_anime_list); end_time = time.time()
+        print(f">>> Preprocesamiento completo. {processed_count} animes cargados, {skipped_count} omitidos. Tiempo: {end_time - start_time:.2f}s.")
         del raw_database_object, temp_anime_list
-except Exception as e:
-    print(f">>> ERROR FATAL al cargar/procesar JSON: {e}")
-    import traceback; traceback.print_exc()
-
+except Exception as e: print(f">>> ERROR FATAL al cargar/procesar JSON: {e}"); import traceback; traceback.print_exc()
 
 # --- Rutas para Servir Frontend ---
+# (Sin cambios)
 @app.route('/')
-def serve_index():
-    return send_from_directory(app.template_folder, 'index.html')
-
+def serve_index(): return send_from_directory(app.template_folder, 'index.html')
 @app.route('/detalle.html')
-def serve_detalle():
-    return send_from_directory(app.template_folder, 'detalle.html')
+def serve_detalle(): return send_from_directory(app.template_folder, 'detalle.html')
+@app.route('/ranking.html')
+def serve_ranking(): return send_from_directory(app.template_folder, 'ranking.html')
+@app.route('/search.html')
+def serve_search(): return send_from_directory(app.template_folder, 'search.html')
 
-@app.route('/ranking.html') #Asegúrate que tienes esta ruta si existe ranking.html
-def serve_ranking():
-    return send_from_directory(app.template_folder, 'ranking.html')
+# --- Rutas de API para Autenticación ---
+# (Sin cambios)
+@app.route('/api/auth/register', methods=['POST'])
+def register_user():
+    data = request.get_json(); username = data.get('username'); email = data.get('email'); password = data.get('password')
+    if not username or not email or not password: return jsonify({"msg": "Faltan datos"}), 400
+    if User.query.filter_by(username=username).first(): return jsonify({"msg": "Usuario ya existe"}), 409
+    if User.query.filter_by(email=email).first(): return jsonify({"msg": "Email ya registrado"}), 409
+    new_user = User(username=username, email=email); new_user.set_password(password)
+    try: db.session.add(new_user); db.session.commit(); return jsonify({"msg": "Usuario creado"}), 201
+    except Exception as e: db.session.rollback(); print(f"Error: {e}"); return jsonify({"msg": "Error interno"}), 500
 
-@app.route('/search.html') #Asegúrate que tienes esta ruta si existe search.html
-def serve_search():
-    return send_from_directory(app.template_folder, 'search.html')
+@app.route('/api/auth/login', methods=['POST'])
+def login_user():
+    data = request.get_json(); username_or_email = data.get('username_or_email'); password = data.get('password')
+    if not username_or_email or not password: return jsonify({"msg": "Faltan datos"}), 400
+    user = User.query.filter((User.username == username_or_email) | (User.email == username_or_email)).first()
+    if user and user.check_password(password):
+        access_token = create_access_token(identity=str(user.id))  
+        return jsonify(access_token=access_token, user={'id': user.id, 'username': user.username, 'email': user.email}), 200
+    else: return jsonify({"msg": "Credenciales incorrectas"}), 401
+
+# --- Rutas de API para UserAnimeList ---
+# (Sin cambios)
+@app.route('/api/me/animelist', methods=['POST'])
+@jwt_required()
+def add_to_animelist():
+    user_id_str = get_jwt_identity(); user_id = int(user_id_str); data = request.get_json()
+    anime_mal_id = data.get('anime_mal_id'); status = data.get('status')
+    score = data.get('score', None); episodes_watched = data.get('episodes_watched', None)
+    if not anime_mal_id or not status: return jsonify({"msg": "anime_mal_id y status son requeridos"}), 400
+    allowed_statuses = UserAnimeList.status.type.enums
+    if status not in allowed_statuses:
+        allowed_statuses_str = ', '.join(map(str, allowed_statuses))
+        return jsonify({"msg": f"Status inválido. Valores permitidos: {allowed_statuses_str}"}), 400
+    existing_entry = UserAnimeList.query.filter_by(user_id=user_id, anime_mal_id=anime_mal_id).first()
+    if existing_entry: return jsonify({"msg": "Este anime ya está en tu lista. Actualízalo."}), 409
+    new_entry = UserAnimeList(user_id=user_id, anime_mal_id=anime_mal_id, status=status, score=score, episodes_watched=episodes_watched)
+    try: db.session.add(new_entry); db.session.commit(); return jsonify(new_entry.to_dict()), 201
+    except Exception as e: db.session.rollback(); print(f"Error: {e}"); return jsonify({"msg": "Error interno"}), 500
+
+@app.route('/api/me/animelist', methods=['GET'])
+@jwt_required()
+def get_my_animelist():
+    user_id_str = get_jwt_identity(); user_id = int(user_id_str)
+    user_list_entries = UserAnimeList.query.filter_by(user_id=user_id).order_by(UserAnimeList.updated_at.desc()).all()
+    return jsonify([entry.to_dict() for entry in user_list_entries]), 200
+
+@app.route('/api/me/animelist/<int:anime_mal_id>', methods=['GET'])
+@jwt_required()
+def get_animelist_entry(anime_mal_id):
+    user_id_str = get_jwt_identity(); user_id = int(user_id_str)
+    entry = UserAnimeList.query.filter_by(user_id=user_id, anime_mal_id=anime_mal_id).first()
+    if not entry: return jsonify({"msg": "Anime no encontrado en tu lista"}), 404
+    return jsonify(entry.to_dict()), 200
+
+@app.route('/api/me/animelist/<int:anime_mal_id>', methods=['PUT'])
+@jwt_required()
+def update_animelist_entry(anime_mal_id):
+    user_id_str = get_jwt_identity(); user_id = int(user_id_str); data = request.get_json()
+    entry = UserAnimeList.query.filter_by(user_id=user_id, anime_mal_id=anime_mal_id).first()
+    if not entry: return jsonify({"msg": "Anime no encontrado en lista para actualizar"}), 404
+    if 'status' in data:
+        allowed_statuses = UserAnimeList.status.type.enums
+        if data['status'] not in allowed_statuses:
+            allowed_statuses_str = ', '.join(map(str, allowed_statuses))
+            return jsonify({"msg": f"Status inválido. Valores permitidos: {allowed_statuses_str}"}), 400
+        entry.status = data['status']
+    if 'score' in data: entry.score = data['score'] 
+    if 'episodes_watched' in data: entry.episodes_watched = data['episodes_watched']
+    try: db.session.commit(); return jsonify(entry.to_dict()), 200
+    except Exception as e: db.session.rollback(); print(f"Error: {e}"); return jsonify({"msg": "Error interno"}), 500
+
+@app.route('/api/me/animelist/<int:anime_mal_id>', methods=['DELETE'])
+@jwt_required()
+def delete_animelist_entry(anime_mal_id):
+    user_id_str = get_jwt_identity(); user_id = int(user_id_str)
+    entry = UserAnimeList.query.filter_by(user_id=user_id, anime_mal_id=anime_mal_id).first()
+    if not entry: return jsonify({"msg": "Anime no encontrado en lista para eliminar"}), 404
+    try: db.session.delete(entry); db.session.commit(); return jsonify({"msg": "Anime eliminado de lista"}), 200
+    except Exception as e: db.session.rollback(); print(f"Error: {e}"); return jsonify({"msg": "Error interno"}), 500
+
+# --- 👈 NUEVAS Rutas de API para AnimeReview ---
+@app.route('/api/anime/<int:anime_mal_id>/reviews', methods=['POST'])
+@jwt_required()
+def create_anime_review(anime_mal_id):
+    user_id_str = get_jwt_identity()
+    user_id = int(user_id_str)
+    data = request.get_json()
+
+    review_text = data.get('review_text')
+    rating_given = data.get('rating_given', None) # Opcional
+    is_spoiler = data.get('is_spoiler', False)   # Opcional, default False
+
+    if not review_text:
+        return jsonify({"msg": "El texto de la review es requerido"}), 400
+    
+    # Verificar si ya existe una review para este usuario y anime
+    existing_review = AnimeReview.query.filter_by(user_id=user_id, anime_mal_id=anime_mal_id).first()
+    if existing_review:
+        return jsonify({"msg": "Ya has escrito una review para este anime. Edítala en su lugar."}), 409
+
+    new_review = AnimeReview(
+        user_id=user_id,
+        anime_mal_id=anime_mal_id,
+        review_text=review_text,
+        rating_given=rating_given,
+        is_spoiler=is_spoiler
+    )
+    try:
+        db.session.add(new_review)
+        db.session.commit()
+        return jsonify(new_review.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear review: {e}")
+        return jsonify({"msg": "Error interno al crear la review"}), 500
+
+@app.route('/api/anime/<int:anime_mal_id>/reviews', methods=['GET'])
+def get_anime_reviews(anime_mal_id):
+    # Aquí podrías añadir paginación si esperas muchas reviews
+    reviews = AnimeReview.query.filter_by(anime_mal_id=anime_mal_id).order_by(AnimeReview.created_at.desc()).all()
+    return jsonify([review.to_dict() for review in reviews]), 200
+
+@app.route('/api/reviews/<int:review_id>', methods=['PUT'])
+@jwt_required()
+def update_anime_review(review_id):
+    user_id_str = get_jwt_identity()
+    user_id = int(user_id_str)
+    data = request.get_json()
+
+    review = AnimeReview.query.get(review_id)
+    if not review:
+        return jsonify({"msg": "Review no encontrada"}), 404
+    
+    if review.user_id != user_id:
+        return jsonify({"msg": "No autorizado para editar esta review"}), 403 # Forbidden
+
+    if 'review_text' in data:
+        review.review_text = data['review_text']
+    if 'rating_given' in data:
+        review.rating_given = data['rating_given']
+    if 'is_spoiler' in data:
+        review.is_spoiler = data['is_spoiler']
+    
+    try:
+        db.session.commit()
+        return jsonify(review.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar review: {e}")
+        return jsonify({"msg": "Error interno al actualizar la review"}), 500
+
+@app.route('/api/reviews/<int:review_id>', methods=['DELETE'])
+@jwt_required()
+def delete_anime_review(review_id):
+    user_id_str = get_jwt_identity()
+    user_id = int(user_id_str)
+
+    review = AnimeReview.query.get(review_id)
+    if not review:
+        return jsonify({"msg": "Review no encontrada"}), 404
+    
+    if review.user_id != user_id:
+        # En un caso real, podrías permitir a administradores borrar cualquier review
+        return jsonify({"msg": "No autorizado para eliminar esta review"}), 403
+
+    try:
+        db.session.delete(review)
+        db.session.commit()
+        return jsonify({"msg": "Review eliminada exitosamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar review: {e}")
+        return jsonify({"msg": "Error interno al eliminar la review"}), 500
 
 
-# --- Rutas de la API ---
+# --- Rutas de la API (Existentes para recomendaciones y detalles de JSON) ---
+# (Se mantienen igual)
 @app.route('/api/recommendations/emotion/<string:emotion_tag>')
 def recommend_by_emotion(emotion_tag):
-    print(f">>> Petición emoción: {emotion_tag}")
-    if not anime_data: # Usa la lista anime_data
-        return jsonify({"error": "Datos de anime no disponibles (lista)", "recommendations": [], "pagination": None}), 500
+    # (Lógica existente sin cambios)
+    if not anime_data: return jsonify({"error": "Datos de anime no disponibles (lista)", "recommendations": [], "pagination": None}), 500
     try:
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        if page < 1: page = 1
+        page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
+        if page < 1: page = 1; 
         if limit < 1: limit = 20
-
-        filtered_anime_list = [
-            anime for anime in anime_data # Itera sobre la lista de diccionarios
-            if emotion_tag in anime.get('emotions_assigned', '').split(',')
-        ]
-        print(f">>> Animes encontrados para '{emotion_tag}' (antes de filtrar/ordenar): {len(filtered_anime_list)}")
-
-        if not filtered_anime_list:
-            return jsonify({
-                "recommendations": [],
-                "pagination": {"current_page": page, "limit": limit, "total_results": 0, "total_pages": 0, "has_next_page": False}
-            })
-
-        # Ordenar la lista de diccionarios directamente por 'score_value' (que ya es float)
-        # y 'members_count' (que ya es int)
-        # Filtrar scores >= 9.9 (si es que ese es el umbral que quieres quitar)
-        # score_threshold = 9.9 # Puedes ajustar esto
-        # sorted_list = sorted(
-        #     [anime for anime in filtered_anime_list if anime.get('score_value', 0) < score_threshold],
-        #     key=lambda x: (x.get('score_value', 0), x.get('members_count', 0)),
-        #     reverse=True
-        # )
-        # Si no quieres filtrar por un score_threshold específico para las emociones:
-        sorted_list = sorted(
-            filtered_anime_list,
-            key=lambda x: (x.get('score_value', 0), x.get('members_count', 0)), # Ordenar por score, luego por miembros
-            reverse=True
-        )
-
-
-        total_results = len(sorted_list)
-        total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
+        filtered_anime_list = [anime for anime in anime_data if emotion_tag in anime.get('emotions_assigned', '').split(',')]
+        if not filtered_anime_list: return jsonify({"recommendations": [], "pagination": {"current_page": page, "limit": limit, "total_results": 0, "total_pages": 0, "has_next_page": False}})
+        sorted_list = sorted(filtered_anime_list, key=lambda x: (x.get('score_value', 0), x.get('members_count', 0)), reverse=True)
+        total_results = len(sorted_list); total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
         if page > total_pages and total_pages > 0: page = total_pages
-        
-        start_index = (page - 1) * limit
-        end_index = start_index + limit
+        start_index = (page - 1) * limit; end_index = start_index + limit
         paginated_list = sorted_list[start_index:end_index]
-        print(f">>> Devolviendo resultados {start_index+1}-{min(end_index, total_results)} de {total_results} totales.")
-
         recommendations_output = []
         for anime_row in paginated_list:
-            anime_synonyms = anime_row.get('synonyms', [])
-            synopsis_text = anime_synonyms[0] if isinstance(anime_synonyms, list) and anime_synonyms else 'Sin sinopsis disponible.'
-            
-            # Asegurarse que los tags de 'genre' vienen como string
-            genre_tags_str = ""
-            if isinstance(anime_row.get('tags'), list):
-                genre_tags_str = ", ".join(filter(None, map(str, anime_row.get('tags', []))))
-
-
-            recommendations_output.append({
-               'mal_id': anime_row.get('mal_id'),
-               'title': anime_row.get('title'),
-               'rating': anime_row.get('score_value', 'N/A'), # Usar score_value
-               'genre': genre_tags_str, # Usar tags como string
-               'Emotions': anime_row.get('emotions_assigned'),
-               'Image_URL': anime_row.get('picture'),
-               'thumbnailURL': anime_row.get('thumbnail'),
-               'Synopsis': synopsis_text,
-               # Campos adicionales que tu frontend pueda necesitar para displayAnimeCards
-               'score': anime_row.get('score_value', 0), # Para displayAnimeCards
-               'scored_by': anime_row.get('members_count', 0), # Para displayAnimeCards
-               'images': {'jpg': {'image_url': anime_row.get('thumbnail'), 'large_image_url': anime_row.get('picture')}},
-               'studios': [{'name': studio} for studio in anime_row.get('studios', [])] if isinstance(anime_row.get('studios'), list) else [], # Asumiendo que 'studios' es una lista de strings
-               'episodes': anime_row.get('episodes'),
-               'type': anime_row.get('type')
-           })
-
-        pagination_info = {
-            "current_page": page, "limit": limit, 
-            "total_results": total_results, "total_pages": total_pages,
-            "has_next_page": page < total_pages
-            }
+            anime_synonyms = anime_row.get('synonyms', []); synopsis_text = anime_synonyms[0] if isinstance(anime_synonyms, list) and anime_synonyms else 'Sin sinopsis disponible.'
+            genre_tags_str = ""; 
+            if isinstance(anime_row.get('tags'), list): genre_tags_str = ", ".join(filter(None, map(str, anime_row.get('tags', []))))
+            recommendations_output.append({'mal_id': anime_row.get('mal_id'),'title': anime_row.get('title'),'rating': anime_row.get('score_value', 'N/A'),'genre': genre_tags_str,'Emotions': anime_row.get('emotions_assigned'),'Image_URL': anime_row.get('picture'),'thumbnailURL': anime_row.get('thumbnail'),'Synopsis': synopsis_text,'score': anime_row.get('score_value', 0),'scored_by': anime_row.get('members_count', 0),'images': {'jpg': {'image_url': anime_row.get('thumbnail'), 'large_image_url': anime_row.get('picture')}},'studios': [{'name': studio} for studio in anime_row.get('studios', [])] if isinstance(anime_row.get('studios'), list) else [],'episodes': anime_row.get('episodes'),'type': anime_row.get('type')})
+        pagination_info = {"current_page": page, "limit": limit, "total_results": total_results, "total_pages": total_pages, "has_next_page": page < total_pages}
         return jsonify({"recommendations": recommendations_output, "pagination": pagination_info})
-
-    except Exception as e:
-        print(f">>> ERROR recomendando por emoción '{emotion_tag}': {e}")
-        import traceback; traceback.print_exc()
-        return jsonify({"error": "Error procesando recomendación", "recommendations": [], "pagination": None}), 500
-
+    except Exception as e: import traceback; traceback.print_exc(); return jsonify({"error": "Error procesando recomendación", "recommendations": [], "pagination": None}), 500
 
 @app.route('/api/anime/<int:anime_id>')
 def get_anime_details_by_id(anime_id):
-    print(f">>> Petición detalles para ID: {anime_id}")
-    if not anime_data: return jsonify({"error": "Datos no cargados"}), 500 # Usa la lista anime_data
+    # (Lógica existente sin cambios)
+    if not anime_data: return jsonify({"error": "Datos no cargados"}), 500
     try:
         found_anime = next((anime for anime in anime_data if anime.get('mal_id') == anime_id), None)
         if found_anime:
-            anime_synonyms = found_anime.get('synonyms', [])
-            synopsis_text = anime_synonyms[0] if isinstance(anime_synonyms, list) and anime_synonyms else 'Sin sinopsis detallada.'
-            
-            # Preparar genres en el formato esperado por el frontend si es necesario
-            genres_list = []
-            if isinstance(found_anime.get('tags'), list):
-                genres_list = [{'name': str(tag)} for tag in found_anime.get('tags')]
-
-            details = {
-                'mal_id': found_anime.get('mal_id'), 'title': found_anime.get('title'),
-                'title_japanese': next((s for s in found_anime.get('synonyms', []) if any(c in s for c in '一二三四五六七八九十百千万人日年月曜火水木金土')), None),
-                'images': { 'jpg': { 'image_url': found_anime.get('thumbnail'), 'large_image_url': found_anime.get('picture')}},
-                'score': found_anime.get('score_value'), # Usar score_value preprocesado
-                'rank': None,  # El rank de MAL no está directamente en el JSON offline así, se podría calcular si se ordena todo
-                'popularity': None, # Similar al rank
-                'members': found_anime.get('members_count'), # Usar members_count preprocesado
-                'synopsis': synopsis_text, 'type': found_anime.get('type'), 'episodes': found_anime.get('episodes'),
-                'status': found_anime.get('status'),
-                'aired': { 'string': f"{found_anime.get('animeSeason', {}).get('season', 'N/A')} {found_anime.get('animeSeason', {}).get('year', 'N/A')}" },
-                'duration': f"{found_anime.get('duration', {}).get('value')} seg" if found_anime.get('duration') else 'N/A', # Asumiendo que duration es un dict
-                'rating': None, # Clasificación de edad (G, PG, etc.) - puede no estar en el JSON offline
-                'studios': [{'name': studio} for studio in found_anime.get('studios', [])] if isinstance(found_anime.get('studios'), list) else [],
-                'source': found_anime.get('sources')[0] if isinstance(found_anime.get('sources'), list) and found_anime.get('sources') else 'N/A', # O el campo correcto para la fuente original
-                'genres': genres_list, # Usar la lista de tags formateada
-                'emotions_assigned': found_anime.get('emotions_assigned', '').split(','),
-                'trailer': None # El JSON offline no suele tener trailers
-            }
+            anime_synonyms = found_anime.get('synonyms', []); synopsis_text = anime_synonyms[0] if isinstance(anime_synonyms, list) and anime_synonyms else 'Sin sinopsis detallada.'
+            genres_list = []; 
+            if isinstance(found_anime.get('tags'), list): genres_list = [{'name': str(tag)} for tag in found_anime.get('tags')]
+            details = {'mal_id': found_anime.get('mal_id'), 'title': found_anime.get('title'),'title_japanese': next((s for s in found_anime.get('synonyms', []) if any(c in s for c in '一二三四五六七八九十百千万人日年月曜火水木金土')), None),'images': { 'jpg': { 'image_url': found_anime.get('thumbnail'), 'large_image_url': found_anime.get('picture')}},'score': found_anime.get('score_value'),'rank': None, 'popularity': None,'members': found_anime.get('members_count'),'synopsis': synopsis_text, 'type': found_anime.get('type'), 'episodes': found_anime.get('episodes'),'status': found_anime.get('status'),'aired': { 'string': f"{found_anime.get('animeSeason', {}).get('season', 'N/A')} {found_anime.get('animeSeason', {}).get('year', 'N/A')}" },'duration': f"{found_anime.get('duration', {}).get('value')} seg" if found_anime.get('duration') else 'N/A','rating': None, 'studios': [{'name': studio} for studio in found_anime.get('studios', [])] if isinstance(found_anime.get('studios'), list) else [],'source': found_anime.get('sources')[0] if isinstance(found_anime.get('sources'), list) and found_anime.get('sources') else 'N/A','genres': genres_list,'emotions_assigned': found_anime.get('emotions_assigned', '').split(','),'trailer': None}
             return jsonify({"data": details})
-        else:
-            return jsonify({"error": f"Anime con ID {anime_id} no encontrado"}), 404
-    except Exception as e:
-        print(f">>> ERROR obteniendo detalles para ID '{anime_id}': {e}")
-        import traceback; traceback.print_exc()
-        return jsonify({"error": "Error obteniendo detalles"}), 500
+        else: return jsonify({"error": f"Anime con ID {anime_id} no encontrado"}), 404
+    except Exception as e: import traceback; traceback.print_exc(); return jsonify({"error": "Error obteniendo detalles"}), 500
 
-# NUEVO ENDPOINT PARA RANKING CUSTOM
 @app.route('/api/ranking/custom')
 def custom_ranking():
-    global anime_df # Usar el DataFrame global
-    if anime_df is None or anime_df.empty:
-        return jsonify({"error": "Datos de anime no disponibles (DataFrame)", "data": [], "pagination": None}), 500
-
+    # (Lógica existente sin cambios)
+    global anime_df
+    if anime_df is None or anime_df.empty: return jsonify({"error": "Datos de anime no disponibles (DataFrame)", "data": [], "pagination": None}), 500
     try:
-        min_votes_threshold = int(request.args.get('min_votes', 10000)) # Umbral de votos
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 25))
-
-        # Copiar el DataFrame para no modificar el original si se hacen más llamadas
+        min_votes_threshold = int(request.args.get('min_votes', 10000)); page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 25))
         df_copy = anime_df.copy()
-
-        # Filtrar por el umbral de votos usando la columna 'members_count'
-        # Asegurarse que 'members_count' es numérica
-        if 'members_count' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['members_count']):
-             print("Advertencia: 'members_count' no es numérica o no existe. No se puede filtrar por votos.")
-             # Podrías retornar un error o continuar sin el filtro de votos
-        else:
-            df_copy = df_copy[df_copy['members_count'] >= min_votes_threshold]
-        
-        # Asegurarse que 'score_value' es numérica
-        if 'score_value' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['score_value']):
-            print("Advertencia: 'score_value' no es numérica o no existe. No se puede ordenar por score.")
-            # Podrías retornar un error o usar otro criterio de ordenamiento
-            sorted_df = df_copy # Devolver sin ordenar por score si no se puede
-        else:
-            # Ordenar: primero por score_value descendente, luego por members_count como desempate
-            sorted_df = df_copy.sort_values(by=['score_value', 'members_count'], ascending=[False, False])
-
-        # Paginación
-        total_results = len(sorted_df)
-        total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
+        if 'members_count' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['members_count']): pass
+        else: df_copy = df_copy[df_copy['members_count'] >= min_votes_threshold]
+        if 'score_value' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['score_value']): sorted_df = df_copy
+        else: sorted_df = df_copy.sort_values(by=['score_value', 'members_count'], ascending=[False, False])
+        total_results = len(sorted_df); total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
         if page > total_pages and total_pages > 0: page = total_pages
-        
-        start_index = (page - 1) * limit
-        end_index = start_index + limit
+        start_index = (page - 1) * limit; end_index = start_index + limit
         paginated_df = sorted_df.iloc[start_index:end_index]
-
         results_output = []
         for i, anime_row_series in paginated_df.iterrows():
-            # Convertir la Serie de Pandas a un diccionario
             anime_dict = anime_row_series.to_dict()
-            
-            # El 'rank' es la posición en el sorted_df completo + 1
-            # Se necesita el índice original de la fila en sorted_df (antes de la paginación)
-            # Para esto, podemos resetear el índice de sorted_df y usar el nuevo índice
-            # o iterar sobre sorted_df con un contador antes de paginar.
-            # Una forma más simple: obtener la posición de `i` (índice original de anime_df) en `sorted_df.index`
-            try:
-                original_rank_in_sorted_full_list = sorted_df.index.get_loc(i) + 1
-            except KeyError: # Si el índice no se encuentra (no debería pasar si i viene de paginated_df)
-                original_rank_in_sorted_full_list = -1 
-
-
+            try: original_rank_in_sorted_full_list = sorted_df.index.get_loc(i) + 1
+            except KeyError: original_rank_in_sorted_full_list = -1 
             genres_list_for_output = []
-            if isinstance(anime_dict.get('tags'), list):
-                 genres_list_for_output = [{'name': str(tag)} for tag in anime_dict.get('tags')]
-            elif isinstance(anime_dict.get('tags'), str): # Si 'tags' es una cadena separada por comas
-                 genres_list_for_output = [{'name': tag.strip()} for tag in anime_dict.get('tags').split(',') if tag.strip()]
-
-
-            results_output.append({
-               'mal_id': anime_dict.get('mal_id'),
-               'title': anime_dict.get('title'),
-               'images': {'jpg': {'image_url': anime_dict.get('thumbnail'), 'large_image_url': anime_dict.get('picture')}},
-               'score': anime_dict.get('score_value'), # Score numérico
-               'rank': original_rank_in_sorted_full_list, # El rank calculado
-               'members': anime_dict.get('members_count'), # members_count numérico
-               'scored_by': anime_dict.get('members_count'), # Para consistencia con displayAnimeCards
-               'episodes': anime_dict.get('episodes'),
-               'type': anime_dict.get('type'),
-               'year': anime_dict.get('animeSeason', {}).get('year') if isinstance(anime_dict.get('animeSeason'), dict) else None,
-               'status': anime_dict.get('status'),
-               'genres': genres_list_for_output,
-               'studios': [{'name': studio} for studio in anime_dict.get('studios', [])] if isinstance(anime_dict.get('studios'), list) else [],
-               'synopsis': (anime_dict.get('synonyms', [])[0] if isinstance(anime_dict.get('synonyms'), list) and anime_dict.get('synonyms') else anime_dict.get('synopsis', 'Sin descripción.'))
-               # ... otros campos que displayAnimeCards o displayRankingList puedan necesitar ...
-            })
-
-        pagination_info = {
-            "current_page": page, "limit": limit,
-            "total_results": total_results, "total_pages": total_pages,
-            "has_next_page": page < total_pages
-        }
-        
-        # La API de Jikan para /top/anime devuelve {data: [...], pagination: {...}}
-        # Para ser consistente, devolvemos la misma estructura.
+            if isinstance(anime_dict.get('tags'), list): genres_list_for_output = [{'name': str(tag)} for tag in anime_dict.get('tags')]
+            elif isinstance(anime_dict.get('tags'), str): genres_list_for_output = [{'name': tag.strip()} for tag in anime_dict.get('tags').split(',') if tag.strip()]
+            results_output.append({'mal_id': anime_dict.get('mal_id'),'title': anime_dict.get('title'),'images': {'jpg': {'image_url': anime_dict.get('thumbnail'), 'large_image_url': anime_dict.get('picture')}},'score': anime_dict.get('score_value'),'rank': original_rank_in_sorted_full_list,'members': anime_dict.get('members_count'),'scored_by': anime_dict.get('members_count'),'episodes': anime_dict.get('episodes'),'type': anime_dict.get('type'),'year': anime_dict.get('animeSeason', {}).get('year') if isinstance(anime_dict.get('animeSeason'), dict) else None,'status': anime_dict.get('status'),'genres': genres_list_for_output,'studios': [{'name': studio} for studio in anime_dict.get('studios', [])] if isinstance(anime_dict.get('studios'), list) else [],'synopsis': (anime_dict.get('synonyms', [])[0] if isinstance(anime_dict.get('synonyms'), list) and anime_dict.get('synonyms') else anime_dict.get('synopsis', 'Sin descripción.'))})
+        pagination_info = {"current_page": page, "limit": limit,"total_results": total_results, "total_pages": total_pages,"has_next_page": page < total_pages}
         return jsonify({"data": results_output, "pagination": pagination_info})
+    except Exception as e: import traceback; traceback.print_exc(); return jsonify({"error": "Error procesando ranking custom", "data": [], "pagination": None}), 500
 
-    except Exception as e:
-        print(f">>> ERROR en custom_ranking: {e}")
-        import traceback; traceback.print_exc()
-        return jsonify({"error": "Error procesando ranking custom", "data": [], "pagination": None}), 500
-
-
-# --- Ejecutar Servidor (Configuración para Render) ---
-# Render buscará un callable llamado 'app' por defecto, así que no necesitamos el if __name__ == '__main__': app.run()
-# Simplemente asegúrate que tu Procfile (si usas uno) o el comando de inicio de Render llame a este archivo
-# de una manera que Flask pueda ser servido por un servidor WSGI como Gunicorn.
-# Ejemplo para Gunicorn: gunicorn app:app
-# No es necesario if __name__ == '__main__': app.run(debug=True) para producción en Render.
-# Si quieres probar localmente con `python app.py`, puedes descomentar:
+# --- Ejecutar Servidor ---
 if __name__ == '__main__':
+  with app.app_context():
+    db.create_all()
   app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5001)))

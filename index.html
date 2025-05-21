@@ -28,20 +28,25 @@
       <a href="index.html" class="header-title-link">
           <div class="header-title">ani<span>Emotion</span></div>
       </a>
+      
       <div class="profile">
-        <div class="user-profile">
-           <img src="" alt="User profile" class="user-img">
+        <div id="auth-buttons" class="auth-buttons-container">
+            <button id="open-login-btn" class="auth-button">Login</button> 
+            <button id="open-register-btn" class="auth-button">Register</button>
         </div>
-        <div class="profile-menu">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu" width="18" height="18"> <path d="M3 12h18M3 6h18M3 18h18" /> </svg>
-          <span>Menu</span>
-        </div>
-        </div>
+
+        <div id="user-profile-controls" class="user-profile-info">
+            <div class="user-profile">
+                <img src="img/default-user.png" alt="User profile" id="user-avatar-img" class="user-img"> </div>
+            <span id="username-display" class="username-display"></span>
+            <button id="logout-btn" class="logout-button">Logout</button>
+            </div>
+      </div>
   </div>
 
       <div class="anime-slide banner-slider-container">
-        <div class="loading-indicator" id="slide-loading">Cargando...</div> <div class="banner-slides" id="banner-slides-content">
-        <div class="banner-slides" id="banner-slides-content"></div>
+        <div class="loading-indicator" id="slide-loading">Cargando...</div>
+        <div class="banner-slides" id="banner-slides-content">
             </div>
       
         <button class="banner-nav prev" id="banner-prev">&#10094;</button>
@@ -52,8 +57,10 @@
       
       </div>
 
-    <div class="latest-releases-section section-container"> <div class="section-header"> <h2 class="section-title">Últimos Lanzamientos Populares</h2>
-             </div>
+    <div class="latest-releases-section section-container">
+        <div class="section-header">
+            <h2 class="section-title">Últimos Lanzamientos Populares</h2>
+        </div>
         <div class="loading-indicator" id="latest-releases-loading">Cargando...</div>
         <div id="latest-releases-cards" class="anime-cards">
             </div>
@@ -74,8 +81,7 @@
         <div class="top-ranked-section section-container">
           <div class="section-header">
               <h2 class="section-title">Top 10 Animes Populares</h2>
-              <a href="ranking.html" class="view-all-link">Ver Ranking Completo <i class="fas fa-arrow-right"></i></a>
-          </div>
+              <a href="ranking.html" class="view-all-link">Ver Ranking Completo <i class="fas fa-arrow-right"></i></a> </div>
           <div class="loading-indicator" id="top-ranked-loading">Cargando top animes...</div>
           <div id="top-ranked-cards" class="anime-cards horizontal-scroll-container">
               </div>
@@ -87,7 +93,8 @@
       </aside>
 
       <main class="popular-anime">
-        <div class="main-menu"> <h2 class="section-title genre">Populares por Género</h2>
+        <div class="main-menu">
+          <h2 class="section-title genre">Populares por Género</h2>
           <div class="anime-types">
             <a href="#" class="anime-type active">Todos</a>
             <a href="#" class="anime-type">Acción</a>
@@ -105,8 +112,65 @@
 
         <div id="pagination-controls" class="pagination-container">
             </div>
-      </main> </div> </div> <script type="module" src="api.js"></script>
-  <script type="module" src="main.js"></script>
+      </main>
+    </div> <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" data-modal-id="login-modal">&times;</span>
+            <h2>Welcome back!</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email-username">EMAIL ADDRESS OR USERNAME</label>
+                    <input type="text" id="login-email-username" name="username_or_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">PASSWORD</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <div class="form-options">
+                    <label><input type="checkbox" name="remember-me"> Remember me</label>
+                    <a href="#" id="forgot-password-link">Forgot password?</a>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">Login</button>
+                </div>
+                <div id="login-error-message" class="error-message-modal" style="display:none;"></div>
+                <p class="switch-modal-text">Don't have an account? <a href="#" id="show-register-modal-link" class="switch-link">Register</a></p>
+            </form>
+        </div>
+    </div>
 
-</body>
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" data-modal-id="register-modal">&times;</span>
+            <h2>Create an Account</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">YOUR NAME (USERNAME)</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">EMAIL ADDRESS</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">PASSWORD</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">CONFIRM PASSWORD</label>
+                    <input type="password" id="register-confirm-password" name="confirm_password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">Register</button>
+                </div>
+                <div id="register-error-message" class="error-message-modal" style="display:none;"></div>
+                <p class="switch-modal-text">Have an account? <a href="#" id="show-login-modal-link" class="switch-link">Login</a></p>
+            </form>
+        </div>
+    </div>
+
+  </div> <script type="module" src="api.js"></script>
+  <script type="module" src="main.js"></script>
+  <script type="module" src="auth.js"></script>
+  </body>
 </html>
