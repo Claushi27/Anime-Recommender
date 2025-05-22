@@ -11,20 +11,13 @@
   <link rel="stylesheet" href="CSS/styles-additional.css">
   <link rel="stylesheet" href="CSS/detalle-v2.css">
   <style>
-    /* Estilos carga/error (sin cambios significativos) */
-    .detail-loading, .detail-error { text-align: center; padding: 60px 20px; font-size: 1.3em; min-height: 400px; }
-    .detail-loading { color: var(--primary-color); }
-    .detail-error { color: var(--secondary-color); }
 
-    /* Ocultar contenido por defecto */
-     .anime-detail-content { display: none; }
+
   </style>
 
 </head>
-<body class="page-default-header">
-  <div class="anime-store">
-    <div class="header">
-        <div class="browse">
+<body class="page-default-header"> <div class="anime-store">
+    <div class="header"> <div class="browse">
           <div class="browse-category">
             Emociones <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down" width="16" height="16" style="margin-left: 5px;"> <path d="M6 9l6 6 6-6" /> </svg>
           </div>
@@ -41,14 +34,16 @@
             <div class="header-title">ani<span>Emotion</span></div>
         </a>
         <div class="profile">
-          <div class="user-profile">
-             <img src="" alt="User profile" class="user-img">
-          </div>
-          <div class="profile-menu">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu" width="18" height="18"> <path d="M3 12h18M3 6h18M3 18h18" /> </svg>
-            <span>Menu</span>
-          </div>
-          </div>
+            <div id="auth-buttons" class="auth-buttons-container">
+                <button id="open-login-btn" class="auth-button">Login</button> 
+                <button id="open-register-btn" class="auth-button">Register</button>
+            </div>
+            <div id="user-profile-controls" class="user-profile-info" style="display: none;">
+                <img src="img/default-user.png" alt="User profile" id="user-avatar-img" class="user-img">
+                <span id="username-display" class="username-display"></span>
+                <button id="logout-btn" class="logout-button">Logout</button>
+            </div>
+        </div>
     </div>
 
     <div class="detail-page-container" id="detail-content">
@@ -60,11 +55,44 @@
             <section class="detail-top-section">
                 <div class="top-left">
                     <img id="anime-poster" src="" alt="Poster" class="detail-poster-img">
+                    
                     <div class="action-buttons">
-                        <button id="add-list-button" disabled title="Próximamente"><i class="fas fa-plus-circle"></i> Añadir a Mi Lista</button>
-                        <button id="add-fav-button" disabled title="Próximamente"><i class="far fa-heart"></i> Marcar Favorito</button>
+                        <button id="manage-list-button"><i class="fas fa-list-alt"></i> Gestionar en Mi Lista</button>
+                        </div>
+
+                    <div id="user-anime-status-section">
+                        <h4>En Tu Lista</h4>
+                        <div id="current-user-status">
+                            <p class="no-status">Este anime no está en tu lista.</p>
+                            </div>
+                        <form id="anime-list-form">
+                            <div class="form-group">
+                                <label for="list-status">Estado:</label>
+                                <select id="list-status" name="status">
+                                    <option value="watching">Viendo</option>
+                                    <option value="completed">Completado</option>
+                                    <option value="planned">Planeado Ver</option>
+                                    <option value="on_hold">En Pausa</option>
+                                    <option value="dropped">Dejado</option>
+                                    <option value="favorites">Favoritos</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="list-score">Tu Puntuación (1-10):</label>
+                                <input type="number" id="list-score" name="score" min="1" max="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="list-episodes">Episodios Vistos:</label>
+                                <input type="number" id="list-episodes" name="episodes_watched" min="0">
+                            </div>
+                            <div class="form-actions-buttons">
+                                <button type="submit" id="save-to-list-btn">Guardar en Mi Lista</button>
+                                <button type="button" id="remove-from-list-btn" style="display: none;">Quitar de la Lista</button>
+                            </div>
+                            <div id="list-action-message" style="display: none;"></div>
+                        </form>
                     </div>
-                     <div id="additional-info-section" class="detail-section side-section">
+                    <div id="additional-info-section" class="detail-section side-section">
                         <h3>Información Adicional</h3>
                         <ul id="anime-info-list"><li>Cargando...</li></ul>
                         <h4>Títulos Alternativos:</h4>
@@ -118,26 +146,33 @@
                          <p id="anime-synopsis">Cargando sinopsis...</p>
                     </section>
 
-                     <section id="user-interaction-section" class="detail-section placeholder-section">
-                         <h3>Tu Puntuación y Review (Próximamente)</h3>
-                         <div class="interaction-content">
-                             <div class="rating-placeholder">
-                                 <span>Tu Nota:</span>
-                                 <div class="stars">
-                                    <button disabled title="Próximamente">☆</button><button disabled title="Próximamente">☆</button><button disabled title="Próximamente">☆</button><button disabled title="Próximamente">☆</button><button disabled title="Próximamente">☆</button>
-                                 </div>
-                                 <button class="action-button-disabled" disabled>Guardar Nota</button>
+                     <section id="user-review-section" class="detail-section placeholder-section" style="display: none;"> <h3 id="user-review-title">Tu Review</h3>
+                         <div id="current-user-review-display" style="margin-bottom: 15px;">
                              </div>
-                             <div class="review-placeholder">
-                                 <button class="action-button-disabled" disabled>Escribir Review</button>
+                         <form id="anime-review-form">
+                             <div class="form-group">
+                                 <label for="review-text">Escribe tu review:</label>
+                                 <textarea id="review-text" name="review_text" rows="5" required></textarea>
                              </div>
-                         </div>
+                             <div class="form-group">
+                                 <label for="review-rating">Tu Nota para esta review (opcional):</label>
+                                 <input type="number" id="review-rating" name="rating_given" min="1" max="10">
+                             </div>
+                             <div class="form-group form-group-checkbox">
+                                 <input type="checkbox" id="review-spoiler" name="is_spoiler">
+                                 <label for="review-spoiler">Marcar como spoiler</label>
+                             </div>
+                             <div class="form-actions-buttons">
+                                 <button type="submit" id="save-review-btn">Guardar Review</button>
+                                 <button type="button" id="delete-review-btn" style="display: none; background-color: var(--secondary-color); color:white;">Eliminar Review</button>
+                             </div>
+                             <div id="review-action-message" style="display: none;"></div>
+                         </form>
                     </section>
                 </div>
             </section>
 
             <div class="detail-bottom-content">
-
                  <section id="trailer-section" class="detail-section">
                      <h3>Tráiler / PV</h3>
                      <div id="trailer-content" class="trailer-container">
@@ -149,27 +184,28 @@
                      <h3>Personajes Principales y VA</h3>
                      <div id="characters-slider" class="horizontal-scroll-container">
                          <p class="loading-placeholder">Cargando personajes...</p>
-                         </div>
+                     </div>
                  </section>
 
                  <section id="staff-section" class="detail-section">
                      <h3>Staff Principal</h3>
                      <div id="staff-slider" class="horizontal-scroll-container">
                           <p class="loading-placeholder">Cargando staff...</p>
-                         </div>
+                     </div>
                  </section>
 
                  <section id="recommendations-section" class="detail-section">
                      <h3>Animes Recomendados</h3>
                      <div id="recommendations-slider" class="horizontal-scroll-container recommendations-list">
                          <p class="loading-placeholder">Cargando recomendaciones...</p>
-                        </div>
+                     </div>
                  </section>
 
-                 <section id="reviews" class="detail-section" style="display: none;">
-                     <h3>Reviews de Usuarios</h3>
+                 <section id="all-reviews-section" class="detail-section"> <h3>Reviews de Otros Usuarios</h3>
+                     <div id="anime-reviews-list">
+                         <p class="loading-placeholder">Cargando reviews...</p>
+                     </div>
                  </section>
-
-            </div> </div> </div> </div> <script type="module" src="detalle.js"></script>
-        </body>
+            </div> </div> </div> </div> <script type="module" src="api.js"></script> <script type="module" src="auth.js"></script> <script type="module" src="detalle.js"></script>
+</body>
 </html>

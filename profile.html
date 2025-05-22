@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - AniEmotion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="CSS/style.css">
+    <link rel="stylesheet" href="CSS/styles-additional.css">
+    <style>
+        .profile-page-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .profile-header h1 {
+            font-size: 2em;
+            color: var(--dark-text);
+        }
+        .profile-header p {
+            font-size: 1.1em;
+            color: var(--light-text);
+        }
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-navigation button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--light-text);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px; /* Para que el borde se alinee con el borde de .tab-navigation */
+            transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        .tab-navigation button:hover {
+            color: var(--dark-text);
+        }
+        .tab-navigation button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none; /* Oculto por defecto, JS lo mostrará */
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .anime-list-grid { /* Para mostrar los animes de cada lista */
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Tarjetas más pequeñas */
+            gap: 20px;
+        }
+        .profile-anime-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius-medium);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            overflow: hidden;
+            text-align: center;
+        }
+        .profile-anime-card img {
+            width: 100%;
+            height: 250px; /* Ajustar altura según necesidad */
+            object-fit: cover;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .profile-anime-card .info {
+            padding: 10px;
+        }
+        .profile-anime-card .title {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+            /* Para truncar texto si es muy largo */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .profile-anime-card .user-status,
+        .profile-anime-card .user-score {
+            font-size: 0.85em;
+            color: var(--light-text);
+            margin-bottom: 3px;
+        }
+        .profile-anime-card .user-score strong {
+            color: var(--primary-color);
+        }
+        .profile-anime-card .actions button {
+            font-size: 0.8em;
+            padding: 5px 8px;
+            margin-top: 8px;
+            margin-right: 5px;
+            /* Estilos básicos, puedes mejorarlos */
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+        }
+        .profile-anime-card .actions button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .loading-list, .empty-list {
+            text-align: center;
+            padding: 30px;
+            color: var(--light-text);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="page-default-header"> <div class="anime-store">
+        <div class="header">
+            <div class="browse">
+                <a href="index.html" class="browse-category" style="text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left" width="16" height="16" style="margin-right: 5px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Inicio
+                  </a>
+            </div>
+            <a href="index.html" class="header-title-link">
+                <div class="header-title">ani<span>Emotion</span></div>
+            </a>
+            <div class="profile">
+                <div id="auth-buttons" class="auth-buttons-container" style="display: none;"> <button id="open-login-btn" class="auth-button">Login</button> 
+                    <button id="open-register-btn" class="auth-button">Register</button>
+                </div>
+                <div id="user-profile-controls" class="user-profile-info"> <img src="img/default-user.png" alt="User profile" id="user-avatar-img" class="user-img">
+                    <span id="username-display" class="username-display"></span>
+                    <button id="logout-btn" class="logout-button">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-page-container">
+            <div class="profile-header">
+                <h1>Mi Perfil</h1>
+                <p id="profile-username-greeting">Gestiona tus listas y actividad.</p>
+            </div>
+
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="watching">Viendo</button>
+                <button class="tab-button" data-tab="completed">Completados</button>
+                <button class="tab-button" data-tab="planned">Planeados</button>
+                <button class="tab-button" data-tab="on_hold">En Pausa</button>
+                <button class="tab-button" data-tab="dropped">Dejados</button>
+                <button class="tab-button" data-tab="favorites">Favoritos</button>
+                </div>
+
+            <div id="tab-content-watching" class="tab-content active">
+                <h2>Animes Viendo</h2>
+                <div class="anime-list-grid" id="watching-list">
+                    <p class="loading-list">Cargando tu lista de "Viendo"...</p>
+                </div>
+            </div>
+            <div id="tab-content-completed" class="tab-content">
+                <h2>Animes Completados</h2>
+                <div class="anime-list-grid" id="completed-list">
+                     <p class="loading-list">Cargando tu lista de "Completados"...</p>
+                </div>
+            </div>
+            <div id="tab-content-planned" class="tab-content">
+                <h2>Animes Planeados</h2>
+                <div class="anime-list-grid" id="planned-list">
+                     <p class="loading-list">Cargando tu lista de "Planeados"...</p>
+                </div>
+            </div>
+            <div id="tab-content-on_hold" class="tab-content">
+                <h2>Animes En Pausa</h2>
+                <div class="anime-list-grid" id="on_hold-list">
+                     <p class="loading-list">Cargando tu lista de "En Pausa"...</p>
+                </div>
+            </div>
+            <div id="tab-content-dropped" class="tab-content">
+                <h2>Animes Dejados</h2>
+                <div class="anime-list-grid" id="dropped-list">
+                     <p class="loading-list">Cargando tu lista de "Dejados"...</p>
+                </div>
+            </div>
+            <div id="tab-content-favorites" class="tab-content">
+                <h2>Animes Favoritos</h2>
+                <div class="anime-list-grid" id="favorites-list">
+                     <p class="loading-list">Cargando tu lista de "Favor

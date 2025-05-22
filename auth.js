@@ -42,13 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateLoginStatusUI() {
         const token = localStorage.getItem('accessToken');
         const userDataString = localStorage.getItem('userData');
-
+    
         if (token && userDataString) {
             const userData = JSON.parse(userDataString);
             if (authButtonsContainer) authButtonsContainer.style.display = 'none';
             if (userProfileControlsContainer) userProfileControlsContainer.style.display = 'flex'; 
-            if (usernameDisplay && userData.username) usernameDisplay.textContent = userData.username;
+            if (usernameDisplay && userData.username) {
+                // 👈 NUEVO: Hacer que el nombre de usuario sea un enlace al perfil
+                usernameDisplay.innerHTML = `<a href="profile.html" style="color: inherit; text-decoration: none;">${userData.username}</a>`;
+                usernameDisplay.title = "Ir a mi perfil"; // Tooltip opcional
+            }
         } else {
+            // ... (lógica para usuario no logueado se mantiene igual) ...
             if (authButtonsContainer) authButtonsContainer.style.display = 'flex'; 
             if (userProfileControlsContainer) userProfileControlsContainer.style.display = 'none';
             if (usernameDisplay) usernameDisplay.textContent = '';

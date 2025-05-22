@@ -286,3 +286,437 @@ hr.detail-separator { border: none; height: 1px; background-color: var(--border-
     .recommendation-card.anime-card.scroll-item { width: 140px; }
     .recommendation-card .rec-img { height: 190px; }
 }
+.detail-loading, .detail-error { text-align: center; padding: 60px 20px; font-size: 1.3em; min-height: 400px; }
+.detail-loading { color: var(--primary-color); }
+.detail-error { color: var(--secondary-color); }
+.anime-detail-content { display: none; }
+
+/* Estilos para la nueva sección de gestión de lista (puedes moverlos a detalle-v2.css) */
+#user-anime-status-section {
+    display: none; /* Oculto por defecto, JS lo mostrará si el usuario está logueado */
+    background-color: #f9f9fb;
+    padding: 15px;
+    border-radius: var(--border-radius-medium);
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+}
+#user-anime-status-section h4 {
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--dark-text);
+}
+#current-user-status p {
+    font-size: 0.9em;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    background-color: var(--primary-light);
+    padding: 8px;
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+#current-user-status p.no-status {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    color: var(--light-text);
+}
+
+#anime-list-form .form-group {
+    margin-bottom: 12px;
+}
+#anime-list-form label {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+#anime-list-form select,
+#anime-list-form input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    font-size: 0.9em;
+    background-color: var(--white);
+}
+#anime-list-form .form-actions-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+#anime-list-form button {
+    flex-grow: 1;
+    padding: 9px 12px;
+    font-size: 0.9em;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    border: none;
+    font-weight: 500;
+}
+#anime-list-form #save-to-list-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+#anime-list-form #save-to-list-btn:hover {
+    background-color: #5b54d4;
+}
+#anime-list-form #remove-from-list-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    display: none; /* Oculto por defecto, mostrar si el anime está en la lista */
+}
+ #anime-list-form #remove-from-list-btn:hover {
+    background-color: #d9534f;
+}
+
+#list-action-message {
+    font-size: 0.85em;
+    padding: 8px;
+    margin-top: 10px;
+    border-radius: var(--border-radius-small);
+    text-align: center;
+}
+#list-action-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+#list-action-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+/* ========= Estilos Mejorados para Secciones de Usuario en detalle.html ========= */
+
+/* --- Sección "En Tu Lista" --- */
+#user-anime-status-section {
+    background-color: var(--white); /* Mantener fondo blanco si el contenedor principal es oscuro, o #f9f9fb si es claro */
+    padding: 20px; /* Aumentar padding */
+    border-radius: var(--border-radius-medium);
+    margin-top: 20px; /* Más espacio */
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+#user-anime-status-section h4 {
+    font-size: 1.2em; /* Título un poco más grande */
+    margin-top: 0;
+    margin-bottom: 15px; /* Más espacio debajo del título */
+    color: var(--dark-text);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#current-user-status {
+    margin-bottom: 20px; /* Espacio antes del formulario */
+}
+
+#current-user-status p {
+    font-size: 0.95em; /* Ligeramente más grande */
+    line-height: 1.6;
+    background-color: var(--primary-light);
+    padding: 12px 15px; /* Más padding */
+    border-radius: var(--border-radius-small);
+    border-left: 4px solid var(--primary-color); /* Borde izquierdo destacado */
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+#current-user-status p.no-status {
+    background-color: #f8f9fa; /* Un gris muy claro */
+    border-left-color: #ced4da; /* Borde gris */
+    color: var(--light-text);
+    font-style: italic;
+}
+
+#anime-list-form .form-group {
+    margin-bottom: 15px; /* Espacio entre grupos de formulario */
+}
+
+#anime-list-form label {
+    display: block;
+    font-size: 0.9em; /* Tamaño de label */
+    font-weight: 600; /* Labels un poco más gruesos */
+    margin-bottom: 6px;
+    color: var(--text-color);
+}
+
+#anime-list-form select,
+#anime-list-form input[type="number"] {
+    width: 100%;
+    padding: 10px 12px; /* Padding más cómodo */
+    border: 1px solid #ced4da; /* Borde estándar */
+    border-radius: var(--border-radius-small);
+    font-size: 0.95em;
+    background-color: var(--white);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+#anime-list-form select:focus,
+#anime-list-form input[type="number"]:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.2rem rgba(113, 105, 247, 0.25); /* Sombra de foco similar a Bootstrap */
+}
+
+#anime-list-form .form-actions-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#anime-list-form button { /* Estilo base para ambos botones */
+    flex-grow: 1;
+    padding: 10px 15px; /* Botones más grandes */
+    font-size: 0.95em;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    border: none;
+    font-weight: 600; /* Texto de botón más grueso */
+    transition: background-color 0.2s ease-out, transform 0.1s ease-out;
+}
+
+#anime-list-form button:hover {
+    transform: translateY(-1px); /* Ligero levantamiento */
+}
+
+#anime-list-form #save-to-list-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+#anime-list-form #save-to-list-btn:hover {
+    background-color: #5b54d4; /* Primario más oscuro */
+}
+
+#anime-list-form #remove-from-list-btn {
+    background-color: var(--secondary-light); /* Un fondo más suave para "Quitar" */
+    color: var(--secondary-color); /* Texto rojo */
+    border: 1px solid var(--secondary-color); /* Borde rojo */
+}
+ #anime-list-form #remove-from-list-btn:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* Mensajes de acción para la lista */
+#list-action-message {
+    font-size: 0.9em; /* Tamaño consistente */
+    padding: 10px 15px; /* Padding consistente */
+    margin-top: 15px; /* Más espacio arriba */
+    border-radius: var(--border-radius-small);
+}
+
+
+/* --- Sección "Tu Review" --- */
+#user-review-section {
+    background-color: var(--white); /* O el fondo que prefieras */
+    padding: 25px; /* Más padding */
+    border-radius: var(--border-radius-medium);
+    margin-top: 25px; /* Consistente con otras secciones */
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+#user-review-section h3#user-review-title { /* Aplicar a h3 con el ID específico */
+    font-size: 1.5em; /* Título más grande */
+    color: var(--dark-text);
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#current-user-review-display {
+    margin-bottom: 25px; /* Más espacio antes del formulario de edición/creación */
+    background-color: #f8f9fa; /* Fondo sutil para la review existente */
+    padding: 15px;
+    border-radius: var(--border-radius-small);
+    border-left: 4px solid var(--primary-light); /* Borde decorativo */
+}
+#current-user-review-display h4 { /* "Tu review actual:" */
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--dark-text);
+}
+#current-user-review-display .user-review-text {
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    white-space: pre-wrap; /* Respeta saltos de línea */
+}
+#current-user-review-display small {
+    font-size: 0.85em;
+    color: var(--light-text);
+    display: block; /* Para que cada 'small' ocupe su línea */
+    margin-top: 4px;
+}
+
+
+#anime-review-form label {
+    display: block;
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-color);
+}
+
+#anime-review-form textarea,
+#anime-review-form input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius-small);
+    font-size: 0.95em;
+    background-color: var(--white);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    margin-bottom: 10px; /* Espacio debajo de inputs/textarea */
+}
+#anime-review-form textarea {
+    min-height: 120px; /* Altura mínima para el textarea */
+    resize: vertical; /* Permitir redimensionar verticalmente */
+}
+
+#anime-review-form textarea:focus,
+#anime-review-form input[type="number"]:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.2rem rgba(113, 105, 247, 0.25);
+}
+
+#anime-review-form .form-group-checkbox { /* Para el checkbox de spoiler */
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+#anime-review-form .form-group-checkbox input[type="checkbox"] {
+    margin-right: 8px;
+    width: auto; /* Resetear ancho para checkbox */
+}
+#anime-review-form .form-group-checkbox label {
+    margin-bottom: 0; /* Resetear margen para label de checkbox */
+    font-weight: normal; /* Fuente normal para label de checkbox */
+    font-size: 0.9em;
+}
+
+#anime-review-form .form-actions-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+#anime-review-form button { /* Estilo base para botones de review */
+    flex-grow: 1;
+    padding: 10px 15px;
+    font-size: 0.95em;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease-out, transform 0.1s ease-out;
+}
+#anime-review-form button:hover {
+    transform: translateY(-1px);
+}
+
+#anime-review-form #save-review-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+#anime-review-form #save-review-btn:hover {
+    background-color: #5b54d4;
+}
+
+#anime-review-form #delete-review-btn {
+    background-color: var(--secondary-light);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+}
+#anime-review-form #delete-review-btn:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* Mensajes de acción para reviews */
+.review-action-message { /* ID en HTML es #review-action-message */
+    font-size: 0.9em;
+    padding: 10px 15px;
+    margin-top: 15px;
+    border-radius: var(--border-radius-small);
+}
+.review-action-message.success {
+    background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+}
+.review-action-message.error {
+    background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+}
+
+
+/* Estilos para la lista de Reviews de Otros Usuarios */
+#all-reviews-section h3 { /* "Reviews de Otros Usuarios" */
+    font-size: 1.5em;
+    color: var(--dark-text);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-review-item {
+    background-color: #fdfdff; /* Fondo ligeramente diferente para cada item */
+    padding: 15px;
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--border-color);
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.user-review-item .review-author-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color-light, #eee); /* Usar una variable si la tienes */
+}
+.user-review-item .review-username {
+    font-weight: 600;
+    color: var(--dark-text);
+    font-size: 1.05em;
+}
+.user-review-item .review-date {
+    font-size: 0.8em;
+    color: var(--light-text);
+}
+.user-review-item .review-rating-given {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+.user-review-item .review-spoiler-warning {
+    font-size: 0.85em;
+    color: var(--secondary-color);
+    font-style: italic;
+    margin-bottom: 8px;
+    padding: 5px 8px;
+    background-color: var(--secondary-light);
+    border-radius: var(--border-radius-small);
+    display: inline-block;
+}
+.user-review-item .review-text-content {
+    font-size: 0.95em;
+    line-height: 1.65;
+    color: var(--text-color);
+    white-space: pre-wrap; /* Para respetar saltos de línea y espacios múltiples */
+}
+.no-results-placeholder { /* Placeholder si no hay reviews */
+    text-align: center;
+    padding: 20px;
+    color: var(--light-text);
+    font-style: italic;
+}
