@@ -24,7 +24,9 @@ app = Flask(__name__,
             static_url_path='')
 
 # --- Configuración de la Base de Datos y JWT ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:@localhost/aniemotion_db' 
+# Usar SQLite para deployment en producción (más portable)
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///aniemotion.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'tu-super-secreta-y-larga-clave-jwt-aniemotion-123!@#' 
 db = SQLAlchemy(app)
