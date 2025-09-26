@@ -2,14 +2,13 @@
 
 import json
 import os
-from flask import Flask, jsonify, request, send_from_directory 
-from flask_cors import CORS 
-import re 
-import time 
-import math 
-import pandas as pd 
-from flask_sqlalchemy import SQLAlchemy 
-from werkzeug.security import generate_password_hash, check_password_hash 
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
+import re
+import time
+import math
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity 
 
 # --- Definición de Rutas Base ---
@@ -127,38 +126,92 @@ def assign_emotions_from_tags(tags): # (Sin cambios)
     final_emotions = list(emotions_set)
     return ",".join(final_emotions)
 
-# --- Carga y Preprocesamiento de Datos JSON ---
-# (Sin cambios)
+# --- Carga y Preprocesamiento de Datos JSON (Optimizado para memoria) ---
 anime_data = []
-anime_df = None
-try:
-    start_time = time.time(); backend_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(backend_dir, '..', 'data', 'anime-offline-database-minified.json')
-    json_path = os.path.normpath(json_path)
-    if not os.path.exists(json_path): print(f">>> ERROR: Archivo JSON no encontrado en: {json_path}")
-    else:
-        with open(json_path, 'r', encoding='utf-8') as f: raw_database_object = json.load(f)
-        processed_count = 0; skipped_count = 0; temp_anime_list = []
+
+def load_anime_data():
+    global anime_data
+    try:
+        start_time = time.time()
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(backend_dir, '..', 'data', 'anime-offline-database-minified.json')
+        json_path = os.path.normpath(json_path)
+
+        if not os.path.exists(json_path):
+            print(f">>> ERROR: Archivo JSON no encontrado en: {json_path}")
+            return
+
+        print(f">>> Cargando datos de anime desde: {json_path}")
+
+        with open(json_path, 'r', encoding='utf-8') as f:
+            raw_database_object = json.load(f)
+
+        processed_count = 0
+        skipped_count = 0
+
+        # Procesar en lotes más pequeños para evitar uso excesivo de memoria
         for anime_dict_raw in raw_database_object.get('data', []):
-            anime_dict = dict(anime_dict_raw); mal_id = extract_mal_id(anime_dict.get('sources'))
+            anime_dict = dict(anime_dict_raw)
+            mal_id = extract_mal_id(anime_dict.get('sources'))
+
             if mal_id:
-                anime_dict['mal_id'] = mal_id; anime_dict['emotions_assigned'] = assign_emotions_from_tags(anime_dict.get('tags'))
+                # Solo mantener campos esenciales para reducir memoria
+                processed_anime = {
+                    'mal_id': mal_id,
+                    'title': anime_dict.get('title'),
+                    'picture': anime_dict.get('picture'),
+                    'thumbnail': anime_dict.get('thumbnail'),
+                    'tags': anime_dict.get('tags', []),
+                    'emotions_assigned': assign_emotions_from_tags(anime_dict.get('tags')),
+                    'synonyms': anime_dict.get('synonyms', []),
+                    'episodes': anime_dict.get('episodes'),
+                    'type': anime_dict.get('type'),
+                    'status': anime_dict.get('status'),
+                    'studios': anime_dict.get('studios', []),
+                    'animeSeason': anime_dict.get('animeSeason')
+                }
+
+                # Procesar score
                 try:
-                    anime_dict['score_value'] = float(anime_dict.get('score', {}).get('arithmeticMean', 0))
-                    if anime_dict['score_value'] == 0 and anime_dict.get('score'):
-                        if isinstance(anime_dict.get('score'), (int, float)): anime_dict['score_value'] = float(anime_dict.get('score'))
-                except (ValueError, TypeError): anime_dict['score_value'] = 0.0
+                    score_data = anime_dict.get('score', {})
+                    if isinstance(score_data, dict):
+                        processed_anime['score_value'] = float(score_data.get('arithmeticMean', 0))
+                    else:
+                        processed_anime['score_value'] = float(score_data) if score_data else 0.0
+                except (ValueError, TypeError):
+                    processed_anime['score_value'] = 0.0
+
+                # Procesar members count
                 try:
-                    if 'num_scoring_users' in anime_dict.get('statistics', {}): anime_dict['members_count'] = int(anime_dict['statistics']['num_scoring_users'])
-                    elif 'members' in anime_dict: anime_dict['members_count'] = int(anime_dict['members'])
-                    else: anime_dict['members_count'] = int(anime_dict.get('score', {}).get('usersVoted', 0))
-                except (ValueError, TypeError): anime_dict['members_count'] = 0
-                temp_anime_list.append(anime_dict); processed_count += 1
-            else: skipped_count += 1
-        anime_data = temp_anime_list; anime_df = pd.DataFrame(temp_anime_list); end_time = time.time()
+                    stats = anime_dict.get('statistics', {})
+                    if 'num_scoring_users' in stats:
+                        processed_anime['members_count'] = int(stats['num_scoring_users'])
+                    elif 'members' in anime_dict:
+                        processed_anime['members_count'] = int(anime_dict['members'])
+                    else:
+                        score_data = anime_dict.get('score', {})
+                        processed_anime['members_count'] = int(score_data.get('usersVoted', 0)) if isinstance(score_data, dict) else 0
+                except (ValueError, TypeError):
+                    processed_anime['members_count'] = 0
+
+                anime_data.append(processed_anime)
+                processed_count += 1
+            else:
+                skipped_count += 1
+
+        end_time = time.time()
         print(f">>> Preprocesamiento completo. {processed_count} animes cargados, {skipped_count} omitidos. Tiempo: {end_time - start_time:.2f}s.")
-        del raw_database_object, temp_anime_list
-except Exception as e: print(f">>> ERROR FATAL al cargar/procesar JSON: {e}"); import traceback; traceback.print_exc()
+
+        # Limpiar referencias para liberar memoria
+        del raw_database_object
+
+    except Exception as e:
+        print(f">>> ERROR FATAL al cargar/procesar JSON: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Cargar datos al iniciar
+load_anime_data()
 
 # --- Rutas para Servir Frontend ---
 # (Sin cambios)
@@ -392,32 +445,94 @@ def get_anime_details_by_id(anime_id):
 
 @app.route('/api/ranking/custom')
 def custom_ranking():
-    # (Lógica existente sin cambios)
-    global anime_df
-    if anime_df is None or anime_df.empty: return jsonify({"error": "Datos de anime no disponibles (DataFrame)", "data": [], "pagination": None}), 500
+    global anime_data
+    if not anime_data:
+        return jsonify({"error": "Datos de anime no disponibles", "data": [], "pagination": None}), 500
+
     try:
-        min_votes_threshold = int(request.args.get('min_votes', 10000)); page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 25))
-        df_copy = anime_df.copy()
-        if 'members_count' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['members_count']): pass
-        else: df_copy = df_copy[df_copy['members_count'] >= min_votes_threshold]
-        if 'score_value' not in df_copy.columns or not pd.api.types.is_numeric_dtype(df_copy['score_value']): sorted_df = df_copy
-        else: sorted_df = df_copy.sort_values(by=['score_value', 'members_count'], ascending=[False, False])
-        total_results = len(sorted_df); total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
-        if page > total_pages and total_pages > 0: page = total_pages
-        start_index = (page - 1) * limit; end_index = start_index + limit
-        paginated_df = sorted_df.iloc[start_index:end_index]
+        min_votes_threshold = int(request.args.get('min_votes', 10000))
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 25))
+
+        # Filtrar animes con suficientes votos y score válido
+        filtered_anime = [
+            anime for anime in anime_data
+            if anime.get('members_count', 0) >= min_votes_threshold and anime.get('score_value', 0) > 0
+        ]
+
+        # Ordenar por score y después por members_count (descendente)
+        sorted_anime = sorted(
+            filtered_anime,
+            key=lambda x: (x.get('score_value', 0), x.get('members_count', 0)),
+            reverse=True
+        )
+
+        total_results = len(sorted_anime)
+        total_pages = math.ceil(total_results / limit) if total_results > 0 else 0
+
+        if page > total_pages and total_pages > 0:
+            page = total_pages
+
+        # Paginación
+        start_index = (page - 1) * limit
+        end_index = start_index + limit
+        paginated_anime = sorted_anime[start_index:end_index]
+
         results_output = []
-        for i, anime_row_series in paginated_df.iterrows():
-            anime_dict = anime_row_series.to_dict()
-            try: original_rank_in_sorted_full_list = sorted_df.index.get_loc(i) + 1
-            except KeyError: original_rank_in_sorted_full_list = -1 
-            genres_list_for_output = []
-            if isinstance(anime_dict.get('tags'), list): genres_list_for_output = [{'name': str(tag)} for tag in anime_dict.get('tags')]
-            elif isinstance(anime_dict.get('tags'), str): genres_list_for_output = [{'name': tag.strip()} for tag in anime_dict.get('tags').split(',') if tag.strip()]
-            results_output.append({'mal_id': anime_dict.get('mal_id'),'title': anime_dict.get('title'),'images': {'jpg': {'image_url': anime_dict.get('thumbnail'), 'large_image_url': anime_dict.get('picture')}},'score': anime_dict.get('score_value'),'rank': original_rank_in_sorted_full_list,'members': anime_dict.get('members_count'),'scored_by': anime_dict.get('members_count'),'episodes': anime_dict.get('episodes'),'type': anime_dict.get('type'),'year': anime_dict.get('animeSeason', {}).get('year') if isinstance(anime_dict.get('animeSeason'), dict) else None,'status': anime_dict.get('status'),'genres': genres_list_for_output,'studios': [{'name': studio} for studio in anime_dict.get('studios', [])] if isinstance(anime_dict.get('studios'), list) else [],'synopsis': (anime_dict.get('synonyms', [])[0] if isinstance(anime_dict.get('synonyms'), list) and anime_dict.get('synonyms') else anime_dict.get('synopsis', 'Sin descripción.'))})
-        pagination_info = {"current_page": page, "limit": limit,"total_results": total_results, "total_pages": total_pages,"has_next_page": page < total_pages}
+        for idx, anime_dict in enumerate(paginated_anime):
+            rank = start_index + idx + 1
+
+            # Procesar géneros
+            genres_list = []
+            if isinstance(anime_dict.get('tags'), list):
+                genres_list = [{'name': str(tag)} for tag in anime_dict.get('tags')]
+
+            # Procesar año
+            year = None
+            if isinstance(anime_dict.get('animeSeason'), dict):
+                year = anime_dict.get('animeSeason', {}).get('year')
+
+            # Procesar sinopsis
+            synopsis = 'Sin descripción.'
+            if isinstance(anime_dict.get('synonyms'), list) and anime_dict.get('synonyms'):
+                synopsis = anime_dict.get('synonyms')[0]
+
+            results_output.append({
+                'mal_id': anime_dict.get('mal_id'),
+                'title': anime_dict.get('title'),
+                'images': {
+                    'jpg': {
+                        'image_url': anime_dict.get('thumbnail'),
+                        'large_image_url': anime_dict.get('picture')
+                    }
+                },
+                'score': anime_dict.get('score_value'),
+                'rank': rank,
+                'members': anime_dict.get('members_count'),
+                'scored_by': anime_dict.get('members_count'),
+                'episodes': anime_dict.get('episodes'),
+                'type': anime_dict.get('type'),
+                'year': year,
+                'status': anime_dict.get('status'),
+                'genres': genres_list,
+                'studios': [{'name': studio} for studio in anime_dict.get('studios', [])] if isinstance(anime_dict.get('studios'), list) else [],
+                'synopsis': synopsis
+            })
+
+        pagination_info = {
+            "current_page": page,
+            "limit": limit,
+            "total_results": total_results,
+            "total_pages": total_pages,
+            "has_next_page": page < total_pages
+        }
+
         return jsonify({"data": results_output, "pagination": pagination_info})
-    except Exception as e: import traceback; traceback.print_exc(); return jsonify({"error": "Error procesando ranking custom", "data": [], "pagination": None}), 500
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Error procesando ranking custom", "data": [], "pagination": None}), 500
 
 # --- Ejecutar Servidor ---
 if __name__ == '__main__':
