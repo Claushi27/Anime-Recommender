@@ -704,7 +704,7 @@ async function loadPopularAnime() {
   if (!animeCardsContainer || !cardsLoading) return;
   // Loading indicator ya está activo desde initApp
   try {
-    const popularData = await getPopularAnime(20); // Obtener los 20 más populares
+    const popularData = await getPopularAnime(10); // Obtener los 10 más populares (reducido para evitar rate limiting)
     displayAnimeCards(popularData?.data || [], animeCardsContainer);
   } catch (error) {
     console.error('Error cargando animes populares:', error);

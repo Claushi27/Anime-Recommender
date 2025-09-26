@@ -3,35 +3,65 @@
 const JIKAN_BASE_URL = 'https://api.jikan.moe/v4';
 const LOCAL_BACKEND_URL = 'https://aniemotion.onrender.com'; // URL base de tu backend Flask
 
-// Función para manejar retrasos entre solicitudes (evitar rate limiting en Jikan)
+// Sistema de cola para peticiones a Jikan API (mejorado para evitar 429 errors)
+let requestQueue = [];
+let isProcessingQueue = false;
 let lastRequestTime = 0;
-const MIN_DELAY = 500; // Medio segundo de espera mínimo entre llamadas a Jikan
+const MIN_DELAY = 1000; // 1 segundo entre llamadas para ser más conservador
+const MAX_CONCURRENT_REQUESTS = 2; // Máximo 2 peticiones simultáneas
 
 async function delayIfNeeded() {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
     if (timeSinceLastRequest < MIN_DELAY) {
         const delay = MIN_DELAY - timeSinceLastRequest;
-        console.warn(`Jikan API delay: Waiting ${delay}ms`);
+        console.log(`Jikan API delay: Waiting ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
     }
     lastRequestTime = Date.now();
 }
 
-async function delayedFetch(url) {
-  await delayIfNeeded();
-  try {
-    const response = await fetch(url);
-    lastRequestTime = Date.now();
-
-    if (!response.ok) {
-      throw new Error(`Error API Jikan: ${response.status} - ${response.statusText} en ${url}`);
+// Sistema de cola para procesar peticiones secuencialmente
+async function processQueue() {
+    if (isProcessingQueue || requestQueue.length === 0) {
+        return;
     }
-    return await response.json();
-  } catch (error) {
-    console.error(`Error en fetch para ${url}:`, error);
-    throw new Error(`Fallo al obtener datos de ${url}. (${error.message})`);
-  }
+
+    isProcessingQueue = true;
+
+    while (requestQueue.length > 0) {
+        const { url, resolve, reject } = requestQueue.shift();
+
+        try {
+            await delayIfNeeded();
+            const response = await fetch(url);
+            lastRequestTime = Date.now();
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    // Si recibimos 429, esperamos más tiempo antes de continuar
+                    console.warn(`Rate limited! Waiting extra time before continuing...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 segundos extra
+                }
+                throw new Error(`Error API Jikan: ${response.status} - ${response.statusText} en ${url}`);
+            }
+
+            const data = await response.json();
+            resolve(data);
+        } catch (error) {
+            console.error(`Error en fetch para ${url}:`, error);
+            reject(new Error(`Fallo al obtener datos de ${url}. (${error.message})`));
+        }
+    }
+
+    isProcessingQueue = false;
+}
+
+async function delayedFetch(url) {
+    return new Promise((resolve, reject) => {
+        requestQueue.push({ url, resolve, reject });
+        processQueue();
+    });
 }
 
 // --- Funciones Jikan API ---
@@ -59,8 +89,8 @@ async function searchAnime(query, limit = 20, page = 1, options = {}) {
   return delayedFetch(url);
 }
 
-async function getPopularAnime(limit = 20) {
-  const url = `${JIKAN_BASE_URL}/top/anime?filter=bypopularity&limit=${limit}&sfw=true`; // Agregado sfw=true
+async function getPopularAnime(limit = 10) {
+  const url = `${JIKAN_BASE_URL}/top/anime?filter=bypopularity&limit=${limit}&sfw=true`; // Reducido a 10 para evitar rate limiting
   console.log(`Solicitando a Jikan (Popular Anime): ${url}`);
   return delayedFetch(url);
 }
