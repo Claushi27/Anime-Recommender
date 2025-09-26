@@ -48,6 +48,25 @@ let totalEmotionPages = 0;
 let currentEmotionTag = null;
 let currentGenrePage = 1;
 let totalGenrePages = 0;
+
+// Cache simple para evitar llamadas repetidas
+const apiCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+function getCachedData(key) {
+  const cached = apiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedData(key, data) {
+  apiCache.set(key, {
+    data: data,
+    timestamp: Date.now()
+  });
+}
 let currentGenreId = null;
 let currentGenreName = null;
 let debounceTimer;
@@ -605,7 +624,8 @@ function displayPaginationControls(paginationInfo, context) {
 /**
  * Carga los animes destacados para el banner superior.
  */
-async function loadFeaturedAnime() {
+// NUEVA: Carga rápida del banner sin llamadas a API
+function loadFeaturedAnimeQuick() {
   if (!bannerSlidesContainer || !slideLoading) {
     console.warn("Elementos DOM del banner no encontrados. Saltando carga.");
     if(slideLoading) hideLoading(slideLoading);
@@ -614,31 +634,69 @@ async function loadFeaturedAnime() {
     if(bannerDotsContainer) bannerDotsContainer.style.display = 'none';
     return;
   }
-  // showLoading(slideLoading, "Cargando destacados..."); // Esto ya se hace en initApp globalmente
 
   try {
-    // Lista curada para el banner. Define aquí los 5 animes que QUIERES.
+    // Banner con datos estáticos para carga instantánea
+    const quickBannerAnimes = [
+      {
+        mal_id: 51818,
+        title: "Fire Force Season 3",
+        synopsis: "La tercera temporada de Fire Force continúa la historia épica...",
+        image: "./Img/Fire-Force-Season-3.webp",
+        score: "8.2",
+        year: "2024",
+        type: "TV"
+      },
+      {
+        mal_id: 60146,
+        title: "The Beginning After the End",
+        synopsis: "Una historia de reencarnación y magia en un mundo fantástico...",
+        image: "./Img/TBATE.jpg",
+        score: "8.9",
+        year: "2024",
+        type: "Webtoon"
+      },
+      {
+        mal_id: 59160,
+        title: "Wind Breaker",
+        synopsis: "Una historia sobre ciclismo y superación personal...",
+        image: "./Img/WindBreaker.jpg",
+        score: "8.1",
+        year: "2024",
+        type: "TV"
+      }
+    ];
+
+    console.log("Mostrando banner rápido con datos estáticos...");
+    displayBannerSlides(quickBannerAnimes);
+    hideLoading(slideLoading);
+
+  } catch (error) {
+    console.error('Error en carga rápida del banner:', error);
+    hideLoading(slideLoading);
+  }
+}
+
+// NUEVA: Carga detallada del banner (background)
+async function loadFeaturedAnimeDetailed() {
+  if (!bannerSlidesContainer) return;
+
+  try {
+    console.log("Cargando detalles completos del banner...");
+
+    // Lista curada para el banner
     const curatedBannerAnimesSeed = [
       {
-        mal_id: 51818, // Fire Force Season 3
-        title: "Fire Force Season 3", // Título preferido para el banner
+        mal_id: 51818,
+        title: "Fire Force Season 3",
       },
       {
         mal_id: 60146,
         title: "The Beginning After the End",
       },
       {
-        mal_id: 59160, // WindBreaker (Anime)
+        mal_id: 59160,
         title: "Wind Breaker",
-      },
-      {
-        mal_id: 56038, // Lazarus (Anime)
-        title: "Lazarus",
-      },
-      {
-        mal_id: 59597, // WITCH WATCH (ID de Manga: 119641)
-        title: "Witch Watch",
-        type: "Manga (Destacado)", // Indicar que es un manga
       }
     ];
 
@@ -702,16 +760,33 @@ async function loadFeaturedAnime() {
  */
 async function loadPopularAnime() {
   if (!animeCardsContainer || !cardsLoading) return;
-  // Loading indicator ya está activo desde initApp
+
   try {
-    const popularData = await getPopularAnime(10); // Obtener los 10 más populares (reducido para evitar rate limiting)
-    displayAnimeCards(popularData?.data || [], animeCardsContainer);
+    // Intentar obtener datos desde cache primero
+    const cacheKey = 'popular_anime';
+    let popularData = getCachedData(cacheKey);
+
+    if (popularData) {
+      console.log('Usando datos populares desde cache');
+      displayAnimeCards(popularData || [], animeCardsContainer);
+      hideLoading(cardsLoading);
+      return;
+    }
+
+    // Si no hay cache, hacer llamada a API
+    const apiResponse = await getPopularAnime(10);
+    const animeData = apiResponse?.data || [];
+
+    // Guardar en cache
+    setCachedData(cacheKey, animeData);
+
+    displayAnimeCards(animeData, animeCardsContainer);
   } catch (error) {
     console.error('Error cargando animes populares:', error);
     showErrorMessage('Error al cargar animes populares.');
     if (animeCardsContainer) animeCardsContainer.innerHTML = '<div class="no-results error-placeholder">Error al cargar populares.</div>';
   }
-  // hideLoading se maneja en initApp
+  hideLoading(cardsLoading);
 }
 
 /**
@@ -719,13 +794,27 @@ async function loadPopularAnime() {
  */
 async function loadLatestReleases() {
   if (!latestReleasesContainer || !latestReleasesLoading) return;
-  // Loading indicator ya está activo desde initApp
+
   try {
-      const responseData = await getSeasonalAnime('now', '', 15); // Llama a /seasons/now
-      // --- DEBUGGING TOOLTIP: Verifica los datos aquí ---
-      // console.log("Datos recibidos para Últimos Lanzamientos:", responseData?.data);
-      // -------------------------------------------------
-      displayAnimeCards(responseData?.data || [], latestReleasesContainer);
+      // Intentar obtener datos desde cache primero
+      const cacheKey = 'seasonal_anime';
+      let seasonalData = getCachedData(cacheKey);
+
+      if (seasonalData) {
+        console.log('Usando datos estacionales desde cache');
+        displayAnimeCards(seasonalData || [], latestReleasesContainer);
+        hideLoading(latestReleasesLoading);
+        return;
+      }
+
+      // Si no hay cache, hacer llamada a API
+      const responseData = await getSeasonalAnime('now', '', 10); // Reducido a 10
+      const animeData = responseData?.data || [];
+
+      // Guardar en cache
+      setCachedData(cacheKey, animeData);
+
+      displayAnimeCards(animeData, latestReleasesContainer);
   } catch (error) {
       console.error('Error cargando últimos lanzamientos:', error);
       showErrorMessage('Error al cargar los últimos lanzamientos.');
@@ -733,7 +822,7 @@ async function loadLatestReleases() {
          latestReleasesContainer.innerHTML = '<div class="no-results error-placeholder">Error al cargar lanzamientos.</div>';
       }
   }
-  // hideLoading se maneja en initApp
+  hideLoading(latestReleasesLoading);
 }
 
 /**
@@ -991,20 +1080,18 @@ async function initApp() {
     // Configurar listeners básicos lo antes posible
     setupEventListeners();
 
-    // Cargar contenido principal
-    // El banner es visualmente importante, cargarlo primero puede ser bueno
-    await loadFeaturedAnime();
+    // CARGA PROGRESIVA: Mostrar banner rápido primero
+    loadFeaturedAnimeQuick(); // No await - carga en background
 
-    // Cargar el resto en paralelo para acelerar
-    const loadPromises = [
-        loadPopularAnime(),
-        loadLatestReleases(),
-        loadCustomTopRankedAnime() // Llama al backend custom
-    ];
-    // Esperar a que todas las promesas terminen (resueltas o rechazadas)
-    await Promise.allSettled(loadPromises);
+    // Cargar secciones críticas primero (más rápidas)
+    await loadPopularAnime();
 
-    console.log("Carga inicial de secciones completada.");
+    // Luego cargar el resto de manera escalonada para no saturar la API
+    setTimeout(() => loadLatestReleases(), 500);
+    setTimeout(() => loadCustomTopRankedAnime(), 1000);
+    setTimeout(() => loadFeaturedAnimeDetailed(), 1500); // Cargar detalles del banner después
+
+    console.log("Carga inicial básica completada, continuando en background...");
 
   } catch (error) {
     // Captura errores inesperados durante la secuencia de initApp
